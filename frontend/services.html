@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services | Honey Shield - Security Services</title>
+  <link rel="stylesheet" href="public/css/dashboard.css">
+  <style>
+    .page-transition {
+      animation: fadeIn 0.4s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .main {
+      animation: fadeIn 0.5s ease-in;
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>Honey Shield</h2>
+    <ul>
+      <li onclick="navigateTo('user-dashboard.html')">🏠 Dashboard</li>
+      <li class="active" onclick="navigateTo('services.html')">⚙️ Services</li>
+      <li onclick="navigateTo('activity-logs.html')">📋 Activity Logs</li>
+      <li onclick="navigateTo('settings.html')">⚙️ Settings</li>
+    </ul>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <header class="topbar">
+      <h3>🔧 Security Services</h3>
+      <button onclick="logout()">Logout</button>
+    </header>
+
+    <section class="services">
+
+      <!-- BOT FILTERING -->
+      <div class="service-card">
+        <h4>🤖 Bot Filtering</h4>
+        <p>Detects and blocks automated bots using hidden fields.</p>
+
+        <div class="know-more">
+          <p>Detects automated scripts via hidden input interaction.</p>
+          <p><b>Best for:</b> Public websites</p>
+        </div>
+
+        <button class="activate-btn" onclick="activateService('bot')">
+          Activate
+        </button>
+      </div>
+
+      <!-- HONEYPOT -->
+      <div class="service-card honeypot-card">
+        <div class="card-header">
+          <h4>🍯 Honeypot Protection</h4>
+          <span class="badge security">Security</span>
+        </div>
+
+        <p>
+          Redirects suspicious users to a controlled decoy environment
+          and records malicious behavior for analysis.
+        </p>
+
+        <div class="card-actions">
+          <button class="btn primary" onclick="activateService('honeypot')">
+            Activate
+          </button>
+
+          <button class="btn outline" onclick="runHoneypotTest()">
+            ▶ Run & Test
+          </button>
+        </div>
+
+        <small class="card-hint">
+          Test runs in an isolated environment and does not affect real users.
+        </small>
+      </div>
+
+      <!-- SQL INJECTION -->
+      <div class="service-card">
+        <h4>🛡️ SQL Injection Prevention</h4>
+        <p>Blocks malicious SQL patterns in input fields.</p>
+
+        <div class="know-more">
+          <p>Prevents SQL injection payloads before DB access.</p>
+          <p><b>Best for:</b> Database apps</p>
+        </div>
+
+        <button class="activate-btn" onclick="activateService('sql')">
+          Activate
+        </button>
+      </div>
+
+    </section>
+
+    <!-- CODE DISPLAY PANEL -->
+    <section id="codeSection" class="code-section hidden">
+      <h3 id="codeTitle"></h3>
+      <p>Paste this code into your login page:</p>
+
+      <pre id="codeBlock"></pre>
+
+      <button onclick="copyCode()">Copy Code</button>
+    </section>
+
+  </main>
+
+</div>
+
+<script>
+  const codes = {
+    bot: `
+<!-- Bot Filtering -->
+<input type="text" name="company_name" style="display:none">
+<script>
+document.querySelector("form").addEventListener("submit", function(e) {
+  if (document.querySelector("[name='company_name']").value !== "") {
+    e.preventDefault();
+  }
+});
+<\/script>
+`,
+
+    honeypot: `
+<!-- Honeypot Protection -->
+<script>
+let attempts = 0;
+let lastTime = Date.now();
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  const now = Date.now();
+  attempts = (now - lastTime < 3000) ? attempts + 1 : 1;
+  lastTime = now;
+
+  if (attempts >= 3) {
+    e.preventDefault();
+    window.location.href = "https://securelogincheck.netlify.app/";
+  }
+});
+<\/script>
+`,
+
+    sql: `
+<!-- SQL Injection Prevention -->
+<script>
+document.querySelector("form").addEventListener("submit", function(e) {
+  const inputs = document.querySelectorAll("input");
+  for (let i of inputs) {
+    if (/('|--|;|\\b(OR|AND)\\b)/i.test(i.value)) {
+      e.preventDefault();
+    }
+  }
+});
+<\/script>
+`
+  };
+
+  const titles = {
+    bot: "Bot Filtering Integration Code",
+    honeypot: "Honeypot Protection Integration Code",
+    sql: "SQL Injection Prevention Integration Code"
+  };
+
+  function navigateTo(page) {
+    document.querySelector('.main').style.opacity = '0';
+    setTimeout(() => {
+      window.location.href = page;
+    }, 200);
+  }
+
+  function activateService(service) {
+    const userData = localStorage.getItem("user");
+
+    if (!userData) {
+      alert("Please login again");
+      window.location.href = "login.html";
+      return;
+    }
+
+    const user = JSON.parse(userData);
+    user.service = service;
+    localStorage.setItem("user", JSON.stringify(user));
+
+    document.getElementById("codeTitle").innerText = titles[service];
+    document.getElementById("codeBlock").innerText = codes[service];
+
+    const panel = document.getElementById("codeSection");
+    panel.classList.remove("hidden");
+    panel.scrollIntoView({ behavior: "smooth" });
+
+    alert(service.toUpperCase() + " service activated");
+  }
+
+  function copyCode() {
+    navigator.clipboard.writeText(
+      document.getElementById("codeBlock").innerText
+    );
+    alert("Code copied successfully");
+  }
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+
+  function runHoneypotTest() {
+    navigateTo("honeypot-test.html");
+  }
+</script>
+<script src="public/js/common.js"></script>
+
+</body>
+</html>
+
