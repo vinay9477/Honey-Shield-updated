@@ -75,7 +75,14 @@ function login() {
       msg.className = "message success";
       msg.innerText = "Login successful. Redirecting...";
 
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // Store user data with ID for proper user isolation
+      const userData = {
+        email: email,
+        ...data.user,
+        _id: data.user._id || data.user.id || email // Ensure userId is stored
+      };
+
+      localStorage.setItem("user", JSON.stringify(userData));
 
       setTimeout(() => {
         window.location.href = "user-dashboard.html";

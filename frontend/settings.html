@@ -25,9 +25,231 @@
       animation: fadeIn 0.5s ease-in;
     }
 
+    .settings-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 30px;
+      padding: 20px;
+    }
+
+    .settings-sidebar {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .settings-tab {
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #cbd5e1;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .settings-tab:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .settings-tab.active {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(30, 64, 175, 0.2));
+      border-color: rgba(37, 99, 235, 0.4);
+      color: #60a5fa;
+    }
+
+    .settings-content {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 40px;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .settings-content h3 {
+      margin: 0 0 10px 0;
+      font-size: 24px;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .settings-desc {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .form-section {
+      margin-bottom: 40px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .form-section:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .password-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="password"] {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .form-group input::placeholder {
+      color: #64748b;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(37, 99, 235, 0.5);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px 8px;
+      transition: color 0.2s ease;
+    }
+
+    .password-toggle:hover {
+      color: #cbd5e1;
+    }
+
+    .password-strength {
+      margin-top: 8px;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .strength-bar {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      flex: 1;
+    }
+
+    .strength-bar.weak {
+      background: #ef4444;
+    }
+
+    .strength-bar.fair {
+      background: #f97316;
+    }
+
+    .strength-bar.good {
+      background: #eab308;
+    }
+
+    .strength-bar.strong {
+      background: #10b981;
+    }
+
+    .strength-text {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .info-box {
+      background: rgba(59, 130, 246, 0.1);
+      border-left: 3px solid rgba(59, 130, 246, 0.5);
+      padding: 16px;
+      border-radius: 6px;
+      margin: 30px 0;
+      color: #93c5fd;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .btn-save,
+    .btn-reset {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex: 1;
+    }
+
+    .btn-save {
+      background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+      color: white;
+    }
+
+    .btn-save:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-reset {
+      background: rgba(239, 68, 68, 0.1);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-reset:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
     .notification {
       position: fixed;
-      top: 20px;
+      top: 80px;
       right: 20px;
       padding: 16px 24px;
       border-radius: 8px;
@@ -82,6 +304,38 @@
     .notification.fade-out {
       animation: slideOutRight 0.4s ease-in forwards;
     }
+
+    .error-text {
+      color: #fca5a5;
+      font-size: 12px;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .error-text.show {
+      display: block;
+    }
+
+    .success-text {
+      color: #6ee7b7;
+      font-size: 12px;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .success-text.show {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .settings-container {
+        grid-template-columns: 1fr;
+      }
+
+      .settings-content {
+        padding: 24px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -107,57 +361,129 @@
       <button onclick="logout()">Logout</button>
     </header>
 
-    <!-- Profile Settings -->
-    <section class="settings-card">
-      <h4>👤 Profile Information</h4>
+    <div class="settings-container">
 
-      <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" id="email">
+      <!-- Settings Sidebar Menu -->
+      <div class="settings-sidebar">
+        <div class="settings-tab active" onclick="switchTab('profile')">
+          👤 Profile
+        </div>
+        <div class="settings-tab" onclick="switchTab('password')">
+          🔐 Password
+        </div>
+        <div class="settings-tab" onclick="switchTab('security')">
+          🛡️ Security
+        </div>
       </div>
 
-      <div class="form-group">
-        <label>Organization</label>
-        <input type="text" id="org">
+      <!-- Settings Content Panel -->
+      <div class="settings-content">
+
+        <!-- Profile Tab -->
+        <div id="profile-tab" class="settings-tab-content">
+          <h3>👤 Profile Information</h3>
+          <p class="settings-desc">Manage your account profile and organization details</p>
+
+          <div class="form-section">
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" placeholder="your@email.com">
+              <div class="error-text" id="emailError"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="org">Organization</label>
+              <input type="text" id="org" placeholder="Your Organization Name">
+              <div class="success-text" id="orgSuccess"></div>
+            </div>
+
+            <div class="button-group">
+              <button class="btn-save" onclick="saveProfile()">💾 Save Profile</button>
+              <button class="btn-reset" onclick="resetProfile()">↺ Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Password Tab -->
+        <div id="password-tab" class="settings-tab-content" style="display: none;">
+          <h3>🔐 Change Password</h3>
+          <p class="settings-desc">Update your password to keep your account secure</p>
+
+          <div class="info-box">
+            ℹ️ Your password must be at least 8 characters long and should include a mix of letters, numbers, and special characters for better security.
+          </div>
+
+          <div class="form-section">
+            <div class="form-group">
+              <label for="currentPass">Current Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="currentPass" placeholder="Enter your current password">
+                <button class="password-toggle" onclick="togglePasswordVisibility('currentPass', this)" type="button">👁️</button>
+              </div>
+              <div class="error-text" id="currentPassError"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="newPass">New Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="newPass" placeholder="Enter your new password" oninput="checkPasswordStrength()">
+                <button class="password-toggle" onclick="togglePasswordVisibility('newPass', this)" type="button">👁️</button>
+              </div>
+              <div id="passwordStrength" class="password-strength" style="display: none;">
+                <div class="strength-bar weak"></div>
+                <div class="strength-bar weak"></div>
+                <div class="strength-bar weak"></div>
+                <div class="strength-bar weak"></div>
+                <span class="strength-text" id="strengthText">Weak</span>
+              </div>
+              <div class="error-text" id="newPassError"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="confirmPass">Confirm New Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="confirmPass" placeholder="Confirm your new password">
+                <button class="password-toggle" onclick="togglePasswordVisibility('confirmPass', this)" type="button">👁️</button>
+              </div>
+              <div class="error-text" id="confirmPassError"></div>
+            </div>
+
+            <div class="button-group">
+              <button class="btn-save" onclick="updatePassword()">🔄 Update Password</button>
+              <button class="btn-reset" onclick="resetPassword()">↺ Clear Fields</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Tab -->
+        <div id="security-tab" class="settings-tab-content" style="display: none;">
+          <h3>🛡️ Security Information</h3>
+          <p class="settings-desc">Important security information and guidelines</p>
+
+          <div class="form-section">
+            <div class="info-box">
+              🔐 <strong>Password Change Security</strong><br>
+              After changing your password, you will be automatically logged out for security reasons. You will need to login again with your new password.
+            </div>
+
+            <div class="info-box">
+              ✓ <strong>Best Practices</strong><br>
+              • Use a unique password not used on other websites<br>
+              • Change your password regularly<br>
+              • Never share your password with anyone<br>
+              • Avoid using personal information in passwords
+            </div>
+
+            <div class="info-box">
+              ⚠️ <strong>Account Security</strong><br>
+              All changes made to your account settings are logged for security purposes. Your email address is your primary login credential and account recovery method.
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <button class="btn primary" onclick="saveProfile()">
-        💾 Save Changes
-      </button>
-    </section>
-
-    <!-- Password Settings -->
-    <section class="settings-card">
-      <h4>🔐 Change Password</h4>
-
-      <div class="form-group">
-        <label>Current Password</label>
-        <input type="password" id="currentPass">
-      </div>
-
-      <div class="form-group">
-        <label>New Password</label>
-        <input type="password" id="newPass">
-      </div>
-
-      <div class="form-group">
-        <label>Confirm New Password</label>
-        <input type="password" id="confirmPass">
-      </div>
-
-      <button class="btn danger" onclick="updatePassword()">
-        🔄 Update Password
-      </button>
-    </section>
-
-    <!-- Security Info -->
-    <section class="settings-card info">
-      <h4>🛡️ Security Information</h4>
-      <p>
-        Changes made here will affect your authentication credentials.
-        For security reasons, password changes require re-login.
-      </p>
-    </section>
+    </div>
 
   </main>
 
@@ -176,11 +502,29 @@
   document.getElementById("email").value = user.email || "";
   document.getElementById("org").value = user.organization || "";
 
+  let originalEmail = user.email || "";
+  let originalOrg = user.organization || "";
+
   // Smooth transition on page load
   window.addEventListener('load', () => {
     document.querySelector('.main').style.opacity = '1';
     document.querySelector('.main').style.transition = 'opacity 0.4s ease-in';
   });
+
+  // Tab switching
+  function switchTab(tab) {
+    // Hide all tabs
+    document.querySelectorAll('.settings-tab-content').forEach(el => {
+      el.style.display = 'none';
+    });
+    document.querySelectorAll('.settings-tab').forEach(el => {
+      el.classList.remove('active');
+    });
+
+    // Show selected tab
+    document.getElementById(tab + '-tab').style.display = 'block';
+    event.target.classList.add('active');
+  }
 
   // Notification system
   function showNotification(message, type = 'success', duration = 4000) {
@@ -204,53 +548,182 @@
     }, 200);
   }
 
+  // Password strength checker
+  function checkPasswordStrength() {
+    const password = document.getElementById("newPass").value;
+    const strengthDiv = document.getElementById("passwordStrength");
+    const strengthText = document.getElementById("strengthText");
+    const bars = document.querySelectorAll('#passwordStrength .strength-bar');
+
+    if (password.length === 0) {
+      strengthDiv.style.display = 'none';
+      return;
+    }
+
+    strengthDiv.style.display = 'flex';
+
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[!@#$%^&*]/.test(password)) strength++;
+
+    bars.forEach((bar, index) => {
+      bar.className = 'strength-bar weak';
+      if (index < strength) {
+        if (strength <= 2) bar.className = 'strength-bar weak';
+        else if (strength <= 3) bar.className = 'strength-bar fair';
+        else if (strength <= 4) bar.className = 'strength-bar good';
+        else bar.className = 'strength-bar strong';
+      }
+    });
+
+    if (strength <= 2) strengthText.textContent = 'Weak';
+    else if (strength <= 3) strengthText.textContent = 'Fair';
+    else if (strength <= 4) strengthText.textContent = 'Good';
+    else strengthText.textContent = 'Strong';
+  }
+
+  // Password visibility toggle
+  function togglePasswordVisibility(inputId, button) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      button.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      button.textContent = '👁️';
+    }
+  }
+
+  // Clear error messages
+  function clearErrors() {
+    document.querySelectorAll('.error-text').forEach(el => {
+      el.classList.remove('show');
+      el.textContent = '';
+    });
+  }
+
+  // Save Profile
   function saveProfile() {
+    clearErrors();
     const email = document.getElementById("email").value.trim();
     const org = document.getElementById("org").value.trim();
 
     if (!email) {
       showNotification("Email cannot be empty", 'warning');
+      document.getElementById("emailError").textContent = "Email is required";
+      document.getElementById("emailError").classList.add('show');
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       showNotification("Please enter a valid email address", 'error');
+      document.getElementById("emailError").textContent = "Invalid email format";
+      document.getElementById("emailError").classList.add('show');
       return;
     }
 
     user.email = email;
     user.organization = org || '';
+    originalEmail = email;
+    originalOrg = org;
 
     localStorage.setItem("user", JSON.stringify(user));
     showNotification("✓ Profile updated successfully!", 'success');
   }
 
+  // Reset Profile
+  function resetProfile() {
+    document.getElementById("email").value = originalEmail;
+    document.getElementById("org").value = originalOrg;
+    clearErrors();
+    showNotification("Profile reset to last saved values", 'warning');
+  }
+
+  // Update Password
   function updatePassword() {
+    clearErrors();
     const currentPass = document.getElementById("currentPass").value;
     const newPass = document.getElementById("newPass").value;
     const confirmPass = document.getElementById("confirmPass").value;
 
-    if (!currentPass || !newPass || !confirmPass) {
-      showNotification("⚠️ Please fill all password fields", 'warning');
+    if (!currentPass) {
+      document.getElementById("currentPassError").textContent = "Current password is required";
+      document.getElementById("currentPassError").classList.add('show');
+      showNotification("Please enter your current password", 'warning');
+      return;
+    }
+
+    if (!newPass) {
+      document.getElementById("newPassError").textContent = "New password is required";
+      document.getElementById("newPassError").classList.add('show');
+      showNotification("Please enter a new password", 'warning');
       return;
     }
 
     if (newPass.length < 8) {
-      showNotification("Password must be at least 8 characters long", 'error');
+      document.getElementById("newPassError").textContent = "Password must be at least 8 characters";
+      document.getElementById("newPassError").classList.add('show');
+      showNotification("Password must be at least 8 characters", 'error');
       return;
     }
 
     if (newPass !== confirmPass) {
-      showNotification("⚠️ New passwords do not match", 'error');
+      document.getElementById("confirmPassError").textContent = "Passwords do not match";
+      document.getElementById("confirmPassError").classList.add('show');
+      showNotification("Password confirmation does not match", 'error');
       return;
     }
 
-    showNotification("✓ Password updated. Logging you out...", 'success', 2000);
-    setTimeout(() => {
-      localStorage.clear();
-      window.location.href = "login.html";
-    }, 2200);
+    if (newPass === currentPass) {
+      document.getElementById("newPassError").textContent = "New password must be different from current";
+      document.getElementById("newPassError").classList.add('show');
+      showNotification("New password must be different from current password", 'warning');
+      return;
+    }
+
+    // Send password change request to backend
+    fetch("http://localhost:3000/api/auth/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: user.email,
+        currentPassword: currentPass,
+        newPassword: newPass,
+        userId: user._id || user.id
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.message === "Password changed successfully" || data.success) {
+        showNotification("✓ Password updated. Logging you out...", 'success', 2000);
+        setTimeout(() => {
+          localStorage.clear();
+          window.location.href = "login.html";
+        }, 2200);
+      } else {
+        showNotification(data.message || "Failed to change password", 'error');
+        document.getElementById("currentPassError").textContent = data.message || "Password change failed";
+        document.getElementById("currentPassError").classList.add('show');
+      }
+    })
+    .catch(err => {
+      console.error("Password change error:", err);
+      showNotification("Error: Could not connect to server", 'error');
+    });
+  }
+
+  // Reset Password fields
+  function resetPassword() {
+    document.getElementById("currentPass").value = "";
+    document.getElementById("newPass").value = "";
+    document.getElementById("confirmPass").value = "";
+    document.getElementById("passwordStrength").style.display = 'none';
+    clearErrors();
+    showNotification("Password fields cleared", 'warning');
   }
 
   function logout() {

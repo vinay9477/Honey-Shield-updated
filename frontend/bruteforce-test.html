@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Brute Force Detection Test</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #fce7f3, #fdf2f8);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .test-container {
+      background: #ffffff;
+      width: 420px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #fbcfe8;
+      color: #9d174d;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      margin: 10px 0;
+      color: #111827;
+    }
+
+    p {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+    }
+
+    button {
+      background: #ec4899;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #be185d;
+    }
+
+    .info {
+      margin-top: 15px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .warning {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #b91c1c;
+    }
+
+    .success {
+      color: #166534;
+      background: #dcfce7;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .locked {
+      color: #b91c1c;
+      background: #fee2e2;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .attempt-counter {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #374151;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="test-container">
+
+  <span class="badge">Brute Force Test</span>
+
+  <h2>🚫 Brute Force Detection</h2>
+
+  <p>
+    This page tests brute force attack detection.
+    Make 5+ rapid login attempts to trigger lockout.
+  </p>
+
+  <form id="testForm">
+    <input type="text" name="username" placeholder="Username" value="testuser" required>
+    <input type="password" placeholder="Password" value="wrong" required>
+    <button type="submit">Attempt Login</button>
+  </form>
+
+  <div class="info">
+    Lockout trigger: <b>5 failed attempts</b><br>
+    Lockout duration: <b>15 minutes</b>
+  </div>
+
+  <div class="attempt-counter">
+    Attempts: <span id="attemptCount">0</span>/5
+  </div>
+
+  <div id="result"></div>
+
+  <div class="warning">
+    This test does not affect real users or production data.
+  </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // Get userId from localStorage
+  function getUserId() {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user._id || user.id || user.email || "ANONYMOUS";
+  }
+
+  const maxAttempts = 5;
+  const lockoutTime = 15 * 60 * 1000; // 15 minutes
+  let loginAttempts = JSON.parse(localStorage.getItem('bruteforceTest')) || {};
+
+  const form = document.getElementById("testForm");
+  const resultDiv = document.getElementById("result");
+  const attemptCountSpan = document.getElementById("attemptCount");
+
+  // Update attempt count display
+  function updateDisplay() {
+    const userId = "testuser";
+    const attempts = loginAttempts[userId]?.count || 0;
+    attemptCountSpan.textContent = Math.min(attempts, maxAttempts);
+  }
+
+  updateDisplay();
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const userId = document.querySelector('input[name="username"]').value;
+    const now = Date.now();
+
+    if (!loginAttempts[userId]) {
+      loginAttempts[userId] = { count: 0, lastAttempt: now };
+    }
+
+    // Reset if lockout period has passed
+    if (now - loginAttempts[userId].lastAttempt > lockoutTime) {
+      loginAttempts[userId].count = 0;
+    }
+
+    // Check if account is locked
+    if (loginAttempts[userId].count >= maxAttempts) {
+      resultDiv.className = "locked";
+      resultDiv.innerHTML = "<b>✗ Account Locked!</b><br>Too many failed attempts. Account locked for 15 minutes.";
+
+      fetch("http://localhost:3000/api/logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({userId: getUserId(),
+          ip: "INTERNAL_TEST",
+          type: "BRUTE_FORCE",
+          message: "Brute force attack detected and blocked"
+        })
+      })
+      .catch(err => console.error("Log error:", err));
+
+      return;
+    }
+
+    // Increment attempt count
+    loginAttempts[userId].count++;
+    loginAttempts[userId].lastAttempt = now;
+    localStorage.setItem('bruteforceTest', JSON.stringify(loginAttempts));
+
+    if (loginAttempts[userId].count < maxAttempts) {
+      resultDiv.className = "warning";
+      resultDiv.innerHTML = "<b>✗ Login Failed</b><br>Attempt " + loginAttempts[userId].count + " of " + maxAttempts;
+    } else {
+      resultDiv.className = "locked";
+      resultDiv.innerHTML = "<b>✗ Account Locked!</b><br>Maximum attempts reached.";
+    }
+
+    updateDisplay();
+  });
+
+});
+</script>
+<script src="public/js/common.js"></script>
+
+</body>
+</html>

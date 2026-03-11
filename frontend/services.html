@@ -61,9 +61,15 @@
           <p><b>Best for:</b> Public websites</p>
         </div>
 
-        <button class="activate-btn" onclick="activateService('bot')">
-          Activate
-        </button>
+        <div class="card-actions">
+          <button class="btn primary" onclick="activateService('bot')">
+            Activate
+          </button>
+
+          <button class="btn outline" onclick="runTest('bot')">
+            ▶ Run & Test
+          </button>
+        </div>
       </div>
 
       <!-- HONEYPOT -->
@@ -88,9 +94,7 @@
           </button>
         </div>
 
-        <small class="card-hint">
-          Test runs in an isolated environment and does not affect real users.
-        </small>
+      
       </div>
 
       <!-- SQL INJECTION -->
@@ -103,9 +107,183 @@
           <p><b>Best for:</b> Database apps</p>
         </div>
 
-        <button class="activate-btn" onclick="activateService('sql')">
-          Activate
-        </button>
+        <div class="card-actions">
+          <button class="btn primary" onclick="activateService('sql')">
+            Activate
+          </button>
+
+          <button class="btn outline" onclick="runTest('sql')">
+            ▶ Run & Test
+          </button>
+        </div>
+      </div>
+
+      <!-- XSS PROTECTION -->
+      <div class="service-card">
+        <h4>🔒 XSS (Cross-Site Scripting) Protection</h4>
+        <p>Detects and blocks malicious script injection attempts.</p>
+
+        <div class="know-more">
+          <p>Sanitizes user input to prevent script execution.</p>
+          <p><b>Best for:</b> Web applications with user-generated content</p>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn primary" onclick="activateService('xss')">
+            Activate
+          </button>
+
+          <button class="btn outline" onclick="runTest('xss')">
+            ▶ Run & Test
+          </button>
+        </div>
+      </div>
+
+      <!-- CSRF PROTECTION -->
+      <div class="service-card">
+        <h4>🛡️ CSRF Token Protection</h4>
+        <p>Prevents unauthorized cross-site requests using token validation.</p>
+
+        <div class="know-more">
+          <p>Validates CSRF tokens on all state-changing requests.</p>
+          <p><b>Best for:</b> Forms and API endpoints</p>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn primary" onclick="activateService('csrf')">
+            Activate
+          </button>
+
+          <button class="btn outline" onclick="runTest('csrf')">
+            ▶ Run & Test
+          </button>
+        </div>
+      </div>
+
+      <!-- BRUTE FORCE DETECTION -->
+      <div class="service-card">
+        <h4>🚫 Brute Force Detection</h4>
+        <p>Detects and blocks repeated failed login attempts.</p>
+
+        <div class="know-more">
+          <p>Implements account lockout after multiple failed attempts.</p>
+          <p><b>Best for:</b> Login and authentication pages</p>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn primary" onclick="activateService('bruteforce')">
+            Activate
+          </button>
+
+          <button class="btn outline" onclick="runTest('bruteforce')">
+            ▶ Run & Test
+          </button>
+        </div>
+      </div>
+
+      <!-- RATE LIMITING -->
+      <div class="service-card">
+        <h4>⏱️ Rate Limiting</h4>
+        <p>Prevents API and resource abuse through rate throttling.</p>
+
+        <div class="know-more">
+          <p>Limits requests per user within a specific time window.</p>
+          <p><b>Best for:</b> APIs and public endpoints</p>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn primary" onclick="activateService('ratelimit')">
+            Activate
+          </button>
+
+          <button class="btn outline" onclick="runTest('ratelimit')">
+            ▶ Run & Test
+          </button>
+        </div>
+      </div>
+
+      <!-- DIRECTORY TRAVERSAL -->
+      <div class="service-card">
+        <h4>📁 Directory Traversal Prevention</h4>
+        <p>Blocks path traversal attacks attempting to access restricted files.</p>
+
+        <div class="know-more">
+          <p>Validates file paths to prevent "../" and absolute path access.</p>
+          <p><b>Best for:</b> File download and serving applications</p>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn primary" onclick="activateService('traversal')">
+            Activate
+          </button>
+
+          <button class="btn outline" onclick="runTest('traversal')">
+            ▶ Run & Test
+          </button>
+        </div>
+      </div>
+
+      <!-- FILE UPLOAD VALIDATION -->
+      <div class="service-card">
+        <h4>📤 File Upload Validation</h4>
+        <p>Validates file type, size, and content before acceptance.</p>
+
+        <div class="know-more">
+          <p>Prevents malicious file uploads and mime-type spoofing.</p>
+          <p><b>Best for:</b> File upload forms</p>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn primary" onclick="activateService('fileupload')">
+            Activate
+          </button>
+
+          <button class="btn outline" onclick="runTest('fileupload')">
+            ▶ Run & Test
+          </button>
+        </div>
+      </div>
+
+      <!-- DDoS PROTECTION -->
+      <div class="service-card">
+        <h4>⚡ DDoS Protection</h4>
+        <p>Mitigates distributed denial-of-service attacks through traffic analysis.</p>
+
+        <div class="know-more">
+          <p>Detects and blocks suspicious traffic patterns in real-time.</p>
+          <p><b>Best for:</b> High-traffic applications</p>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn primary" onclick="activateService('ddos')">
+            Activate
+          </button>
+
+          <button class="btn outline" onclick="runTest('ddos')">
+            ▶ Run & Test
+          </button>
+        </div>
+      </div>
+
+      <!-- KEYLOGGER DETECTION -->
+      <div class="service-card">
+        <h4>⌨️ Keylogger Detection</h4>
+        <p>Detects client-side keylogging and monitoring attempts.</p>
+
+        <div class="know-more">
+          <p>Monitors for suspicious keyboard event patterns and libraries.</p>
+          <p><b>Best for:</b> Sensitive forms (login, payment, etc.)</p>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn primary" onclick="activateService('keylogger')">
+            Activate
+          </button>
+
+          <button class="btn outline" onclick="runTest('keylogger')">
+            ▶ Run & Test
+          </button>
+        </div>
       </div>
 
     </section>
@@ -169,13 +347,226 @@ document.querySelector("form").addEventListener("submit", function(e) {
   }
 });
 <\/script>
+`,
+
+    xss: `
+<!-- XSS Protection -->
+<script>
+function sanitizeInput(input) {
+  const div = document.createElement('div');
+  div.textContent = input;
+  return div.innerHTML;
+}
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  const inputs = document.querySelectorAll("input, textarea");
+  for (let i of inputs) {
+    if (/<|>|script|iframe|onclick|onerror|javascript:/i.test(i.value)) {
+      e.preventDefault();
+      alert("Potential XSS attack detected!");
+      return;
+    }
+    i.value = sanitizeInput(i.value);
+  }
+});
+<\/script>
+`,
+
+    csrf: `
+<!-- CSRF Token Protection -->
+<script>
+function generateCSRFToken() {
+  return 'csrf_' + Math.random().toString(36).substr(2, 9);
+}
+
+const csrfToken = generateCSRFToken();
+const csrfInput = document.createElement('input');
+csrfInput.type = 'hidden';
+csrfInput.name = '_csrf_token';
+csrfInput.value = csrfToken;
+document.querySelector("form").appendChild(csrfInput);
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  const token = document.querySelector('[name="_csrf_token"]').value;
+  if (!token || token.length === 0) {
+    e.preventDefault();
+    alert("CSRF validation failed!");
+  }
+});
+<\/script>
+`,
+
+    bruteforce: `
+<!-- Brute Force Detection -->
+<script>
+const maxAttempts = 5;
+const lockoutTime = 15 * 60 * 1000; // 15 minutes
+let loginAttempts = JSON.parse(localStorage.getItem('loginAttempts')) || {};
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  const userId = document.querySelector('input[name="username"]').value;
+  const now = Date.now();
+
+  if (!loginAttempts[userId]) {
+    loginAttempts[userId] = { count: 0, lastAttempt: now };
+  }
+
+  if (now - loginAttempts[userId].lastAttempt > lockoutTime) {
+    loginAttempts[userId].count = 0;
+  }
+
+  if (loginAttempts[userId].count >= maxAttempts) {
+    e.preventDefault();
+    alert("Account temporarily locked due to multiple failed attempts!");
+    return;
+  }
+
+  loginAttempts[userId].count++;
+  loginAttempts[userId].lastAttempt = now;
+  localStorage.setItem('loginAttempts', JSON.stringify(loginAttempts));
+});
+<\/script>
+`,
+
+    ratelimit: `
+<!-- Rate Limiting -->
+<script>
+const rateLimit = { maxRequests: 10, timeWindow: 60000 }; // 10 requests per minute
+let requestLog = JSON.parse(localStorage.getItem('requestLog')) || [];
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  const now = Date.now();
+  requestLog = requestLog.filter(time => now - time < rateLimit.timeWindow);
+
+  if (requestLog.length >= rateLimit.maxRequests) {
+    e.preventDefault();
+    alert("Too many requests! Please wait before trying again.");
+    return;
+  }
+
+  requestLog.push(now);
+  localStorage.setItem('requestLog', JSON.stringify(requestLog));
+});
+<\/script>
+`,
+
+    traversal: `
+<!-- Directory Traversal Prevention -->
+<script>
+function isPathTraversal(path) {
+  return /\\.\\.|\\\|:\\\\/i.test(path) || path.startsWith('/') || path.startsWith('\\\\');
+}
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  const fileInput = document.querySelector('input[type="file"]');
+  if (fileInput) {
+    const fileName = fileInput.value;
+    if (isPathTraversal(fileName)) {
+      e.preventDefault();
+      alert("Invalid file path detected!");
+    }
+  }
+});
+<\/script>
+`,
+
+    fileupload: `
+<!-- File Upload Validation -->
+<script>
+const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+const maxFileSize = 5 * 1024 * 1024; // 5MB
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  const fileInput = document.querySelector('input[type="file"]');
+  if (fileInput && fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+
+    if (!allowedTypes.includes(file.type)) {
+      e.preventDefault();
+      alert("Invalid file type! Allowed: JPG, PNG, PDF");
+      return;
+    }
+
+    if (file.size > maxFileSize) {
+      e.preventDefault();
+      alert("File too large! Maximum size: 5MB");
+      return;
+    }
+  }
+});
+<\/script>
+`,
+
+    ddos: `
+<!-- DDoS Protection -->
+<script>
+const ddosThreshold = { requests: 100, timeWindow: 10000 }; // 100 requests per 10 seconds
+let requestTimestamps = [];
+
+function checkDDoS() {
+  const now = Date.now();
+  requestTimestamps = requestTimestamps.filter(time => now - time < ddosThreshold.timeWindow);
+
+  if (requestTimestamps.length > ddosThreshold.requests) {
+    alert("Suspicious activity detected! Access temporarily restricted.");
+    return false;
+  }
+
+  requestTimestamps.push(now);
+  return true;
+}
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  if (!checkDDoS()) {
+    e.preventDefault();
+  }
+});
+<\/script>
+`,
+
+    keylogger: `
+<!-- Keylogger Detection -->
+<script>
+let suspiciousActivity = false;
+let keyPresses = [];
+const sensitiveForm = document.querySelector("form");
+
+document.addEventListener("keydown", function(e) {
+  keyPresses.push({ key: e.key, time: Date.now() });
+
+  // Remove old entries (outside 5 second window)
+  const now = Date.now();
+  keyPresses = keyPresses.filter(k => now - k.time < 5000);
+
+  // Check for suspicious patterns
+  if (keyPresses.length > 100) {
+    console.warn('Potential keylogger detected!');
+    suspiciousActivity = true;
+  }
+});
+
+sensitiveForm.addEventListener("submit", function(e) {
+  if (suspiciousActivity) {
+    e.preventDefault();
+    alert("Security alert: Suspicious input activity detected!");
+  }
+});
+<\/script>
 `
   };
 
   const titles = {
     bot: "Bot Filtering Integration Code",
     honeypot: "Honeypot Protection Integration Code",
-    sql: "SQL Injection Prevention Integration Code"
+    sql: "SQL Injection Prevention Integration Code",
+    xss: "XSS Protection Integration Code",
+    csrf: "CSRF Token Protection Integration Code",
+    bruteforce: "Brute Force Detection Integration Code",
+    ratelimit: "Rate Limiting Integration Code",
+    traversal: "Directory Traversal Prevention Integration Code",
+    fileupload: "File Upload Validation Integration Code",
+    ddos: "DDoS Protection Integration Code",
+    keylogger: "Keylogger Detection Integration Code"
   };
 
   function navigateTo(page) {
@@ -222,6 +613,27 @@ document.querySelector("form").addEventListener("submit", function(e) {
 
   function runHoneypotTest() {
     navigateTo("honeypot-test.html");
+  }
+
+  function runTest(service) {
+    const testPages = {
+      bot: "bot-test.html",
+      sql: "sql-test.html",
+      xss: "xss-test.html",
+      csrf: "csrf-test.html",
+      bruteforce: "bruteforce-test.html",
+      ratelimit: "ratelimit-test.html",
+      traversal: "traversal-test.html",
+      fileupload: "fileupload-test.html",
+      ddos: "ddos-test.html",
+      keylogger: "keylogger-test.html"
+    };
+
+    if (testPages[service]) {
+      navigateTo(testPages[service]);
+    } else {
+      alert("Test page not available for this service");
+    }
   }
 </script>
 <script src="public/js/common.js"></script>

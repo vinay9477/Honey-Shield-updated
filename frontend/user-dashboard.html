@@ -35,10 +35,10 @@
     <section class="stats">
       <div class="stat-card hover-card user-card">
         <h4>Account</h4>
-        <p class="stat-number email-text">
-          vinaygoud0931@gmail.com
+        <p class="stat-number email-text" id="accountEmails">
+          Loading...
         </p>
-        <span class="stat-desc">Authenticated account</span>
+        <span class="stat-desc">Login credentials</span>
       </div>
 
       <div class="stat-card hover-card org-card">
@@ -237,6 +237,12 @@
 
     const user = JSON.parse(userData);
 
+    // Display the email that user logged in with
+    const emailElement = document.getElementById("accountEmails");
+    if (emailElement && user.email) {
+      emailElement.innerText = user.email;
+    }
+
     // Organization
     const orgEl = document.getElementById("userOrg");
     if (orgEl) {
@@ -256,11 +262,12 @@
     }
 
     // Fetch and display logs
-    fetch("http://localhost:3000/api/logs")
+    fetch(`http://localhost:3000/api/logs?userId=${user._id || user.id}`)
       .then(res => res.json())
       .then(logs => {
-        const userLogs = logs.filter(
-          log => !log.userId || log.userId === user._id
+        const userId = user._id || user.id;
+        const userLogs = (logs || []).filter(
+          log => !log.userId || log.userId === userId || log.user === userId || log.email === user.email
         );
 
         const loginAttempts = userLogs.filter(
@@ -279,7 +286,9 @@
           : 0;
         document.getElementById("successRate").innerText = successRate + "%";
       })
-      .catch(err => console.error("Dashboard log error:", err));
+      .catch(err => {
+        console.error("Dashboard log error:", err);
+      });
   });
 
   // Click handlers for cards

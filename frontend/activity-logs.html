@@ -380,7 +380,7 @@
     }
 
     logsToRender.forEach(log => {
-      const timestamp = new Date(log.createdAt).toLocaleString();
+      const timestamp = new Date(log.createdAt).toLocaleString('en-IN');
       const type = log.type || "UNKNOWN";
       const ip = log.ip || "N/A";
       const message = log.message || "N/A";
@@ -486,10 +486,22 @@
 
   // Fetch logs from API
   function fetchLogs() {
-    fetch("http://localhost:3000/api/logs")
+    const userData = localStorage.getItem("user");
+    if (!userData) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const user = JSON.parse(userData);
+    const userId = user._id || user.id;
+
+    fetch(`http://localhost:3000/api/logs?userId=${userId}`)
       .then(res => res.json())
       .then(logs => {
-        allLogs = logs || generateMockLogs();
+        // Filter logs for current user only
+        allLogs = (logs || []).filter(log =>
+          !log.userId || log.userId === userId || log.user === userId || log.email === user.email
+        );
         filteredLogs = [...allLogs];
         renderLogs(filteredLogs);
       })
