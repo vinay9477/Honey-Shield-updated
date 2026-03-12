@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | HoneyShield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="public/css/cyber-dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+  <style>
+    /* ── TICKER ───────────────────────────────────────── */
+    .ticker-wrap {
+      display: flex; align-items: center;
+      border-bottom: 1px solid var(--border);
+      height: 36px; flex-shrink: 0; overflow: hidden;
+    }
+    .ticker-badge {
+      display: flex; align-items: center; gap: 7px;
+      padding: 0 16px; height: 100%; flex-shrink: 0;
+      background: rgba(255,59,107,0.1);
+      border-right: 1px solid rgba(255,59,107,0.2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 2px;
+      color: var(--red); text-transform: uppercase;
+    }
+    .ticker-dot { width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink 1s ease-in-out infinite; }
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+    .ticker-track { flex:1;overflow:hidden;position:relative; }
+    .ticker-track::before,.ticker-track::after {
+      content:'';position:absolute;top:0;bottom:0;width:40px;z-index:2;pointer-events:none;
+    }
+    .ticker-track::before { left:0;background:linear-gradient(90deg,#07050f,transparent); }
+    .ticker-track::after  { right:0;background:linear-gradient(-90deg,var(--bg),transparent); }
+    .ticker-inner {
+      display:flex;align-items:center;white-space:nowrap;
+      animation:tickScroll 35s linear infinite;
+    }
+    .ticker-inner:hover { animation-play-state:paused; }
+    @keyframes tickScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    .tick-ev {
+      display:inline-flex;align-items:center;gap:8px;
+      padding:0 20px;font-size:11px;color:var(--muted);
+      border-right:1px solid var(--border);
+    }
+    .tick-ev .t-type { font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px; }
+    .tick-ev.critical .t-type { color:var(--red); }
+    .tick-ev.high     .t-type { color:#f97316; }
+    .tick-ev.medium   .t-type { color:var(--amber); }
+    .tick-ev.ok       .t-type { color:var(--green); }
+    .tick-ev .t-ip  { font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--amber); }
+    .tick-ev .t-time{ color:rgba(226,232,240,0.2);font-size:10px; }
+
+    /* ── CONTENT ─────────────────────────────────────── */
+    .content { padding:24px 28px;display:flex;flex-direction:column;gap:20px;flex:1; }
+
+    /* ── STAT CARDS ──────────────────────────────────── */
+    .stat-row { display:grid;grid-template-columns:repeat(4,1fr);gap:14px; }
+    .scard {
+      background:rgba(13,11,22,0.9);border:1px solid var(--border);
+      border-radius:14px;padding:18px 20px;
+      position:relative;overflow:hidden;transition:all 0.25s;
+    }
+    .scard::before { content:'';position:absolute;top:0;left:0;right:0;height:2px; }
+    .scard.cyan::before   { background:linear-gradient(90deg,var(--cyan),#00a8ff); }
+    .scard.violet::before { background:linear-gradient(90deg,var(--violet),#9333ea); }
+    .scard.red::before    { background:linear-gradient(90deg,var(--red),#ff6b6b); }
+    .scard.green::before  { background:linear-gradient(90deg,var(--green),#34d399); }
+    .scard:hover { transform:translateY(-3px);border-color:rgba(255,255,255,0.12); }
+    .scard-label {
+      font-family:'JetBrains Mono',monospace;font-size:9px;
+      letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;
+    }
+    .scard-val { font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1;margin-bottom:4px; }
+    .scard.cyan   .scard-val { color:var(--cyan); }
+    .scard.violet .scard-val { color:#a78bfa; }
+    .scard.red    .scard-val { color:var(--red); }
+    .scard.green  .scard-val { color:var(--green); }
+    .scard-sub { font-size:11px;color:rgba(226,232,240,0.25); }
+
+    /* ── MID ROW ─────────────────────────────────────── */
+    .mid-row { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+
+    /* ── PANEL ───────────────────────────────────────── */
+    .panel {
+      background:rgba(13,11,22,0.9);border:1px solid var(--border);
+      border-radius:14px;overflow:hidden;
+      position:relative;
+    }
+    .panel::before {
+      content:'';position:absolute;top:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(0,245,255,0.15),rgba(124,58,237,0.15),transparent);
+    }
+    .panel-head {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 20px;border-bottom:1px solid var(--border);
+    }
+    .panel-title {
+      font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
+      display:flex;align-items:center;gap:8px;
+    }
+    .panel-body { padding:18px 20px; }
+
+    /* ── RATE BARS ───────────────────────────────────── */
+    .rate-row { display:flex;align-items:center;gap:12px;margin-bottom:12px; }
+    .rate-row:last-child { margin-bottom:0; }
+    .rate-lbl {
+      font-family:'JetBrains Mono',monospace;font-size:9px;
+      letter-spacing:1px;color:var(--muted);text-transform:uppercase;min-width:110px;
+    }
+    .rate-track { flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden; }
+    .rate-fill { height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.16,1,.3,1);width:0%; }
+    .rate-fill.green { background:linear-gradient(90deg,var(--green),#34d399); }
+    .rate-fill.red   { background:linear-gradient(90deg,var(--red),#ff6b6b); }
+    .rate-pct { font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;min-width:36px;text-align:right; }
+    .rate-pct.green { color:var(--green); }
+    .rate-pct.red   { color:var(--red); }
+
+    /* ── CHARTS ──────────────────────────────────────── */
+    .charts-row { display:grid;grid-template-columns:1.4fr 1fr;gap:14px; }
+    .chart-canvas-wrap { height:220px;position:relative; }
+
+    /* ── BREAKDOWN ───────────────────────────────────── */
+    .breakdown-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+      gap:10px;padding:16px 20px;
+    }
+    .bd-card {
+      background:rgba(255,255,255,0.03);border:1px solid var(--border);
+      border-radius:10px;padding:14px;
+      cursor:pointer;transition:all 0.2s;
+      position:relative;overflow:hidden;
+    }
+    .bd-card::before { content:'';position:absolute;top:0;left:0;right:0;height:2px; }
+    .bd-card.brute::before    { background:#ef4444; }
+    .bd-card.sql::before      { background:#f97316; }
+    .bd-card.xss::before      { background:#eab308; }
+    .bd-card.ddos::before     { background:#8b5cf6; }
+    .bd-card.csrf::before     { background:#3b82f6; }
+    .bd-card.keylog::before   { background:#ec4899; }
+    .bd-card.fileup::before   { background:#14b8a6; }
+    .bd-card.traversal::before{ background:#f59e0b; }
+    .bd-card.ratelimit::before{ background:#6366f1; }
+    .bd-card.honeypot::before { background:#10b981; }
+    .bd-card.other::before    { background:#64748b; }
+    .bd-card:hover { transform:translateY(-3px);border-color:rgba(255,255,255,0.12); }
+    .bd-icon  { font-size:18px;margin-bottom:8px; }
+    .bd-num   { font-family:'Syne',sans-serif;font-size:24px;font-weight:800;line-height:1;color:var(--text);margin-bottom:4px; }
+    .bd-num.zero { color:rgba(226,232,240,0.2); }
+    .bd-name  { font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase; }
+    .bd-bar   { height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;margin-top:8px; }
+    .bd-bar-fill { height:100%;border-radius:2px;transition:width 1.2s cubic-bezier(.16,1,.3,1);width:0%; }
+    .bd-card.brute .bd-bar-fill    { background:#ef4444; }
+    .bd-card.sql .bd-bar-fill      { background:#f97316; }
+    .bd-card.xss .bd-bar-fill      { background:#eab308; }
+    .bd-card.ddos .bd-bar-fill     { background:#8b5cf6; }
+    .bd-card.csrf .bd-bar-fill     { background:#3b82f6; }
+    .bd-card.keylog .bd-bar-fill   { background:#ec4899; }
+    .bd-card.fileup .bd-bar-fill   { background:#14b8a6; }
+    .bd-card.traversal .bd-bar-fill{ background:#f59e0b; }
+    .bd-card.ratelimit .bd-bar-fill{ background:#6366f1; }
+    .bd-card.honeypot .bd-bar-fill { background:#10b981; }
+    .bd-card.other .bd-bar-fill    { background:#64748b; }
+
+    /* ── LIVE ATTACKS ─────────────────────────────────── */
+    .live-list {
+      display:flex;flex-direction:column;gap:8px;
+      padding:14px 20px;max-height:280px;overflow-y:auto;
+    }
+    .live-item {
+      display:flex;align-items:center;gap:12px;
+      padding:12px 14px;
+      background:rgba(255,255,255,0.02);
+      border:1px solid var(--border);border-radius:9px;
+      transition:all 0.2s;
+    }
+    .live-item:hover { background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12); }
+    .live-sev  { width:4px;height:36px;border-radius:2px;flex-shrink:0; }
+    .live-icon { font-size:18px;flex-shrink:0; }
+    .live-name { font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text);letter-spacing:0.5px; }
+    .live-sev-lbl { font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-top:2px; }
+    .live-right { margin-left:auto;text-align:right; }
+    .live-ip   { font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--amber); }
+    .live-time { font-size:10px;color:rgba(226,232,240,0.2);margin-top:2px; }
+    .btn-refresh {
+      font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;
+      padding:6px 14px;
+      background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);
+      border-radius:6px;color:var(--cyan);cursor:pointer;transition:all 0.2s;
+    }
+    .btn-refresh:hover { background:rgba(0,245,255,0.15); }
+
+    @keyframes slideUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes slideIn { from{opacity:0;transform:translateX(10px)} to{opacity:1;transform:translateX(0)} }
+  </style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+<div class="mesh-bg"></div>
+<div class="grid-overlay"></div>
+
+<div class="layout">
+
+  <!-- ── SIDEBAR (matches services/activity-logs) ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <svg class="sb-shield" viewBox="0 0 40 40" fill="none">
+        <path d="M20 3L5 9V20C5 27.5 11.5 34.5 20 37C28.5 34.5 35 27.5 35 20V9L20 3Z"
+              stroke="url(#sbGrad)" stroke-width="1.5" fill="rgba(0,245,255,0.05)"/>
+        <path d="M13 20L17.5 24.5L27 15" stroke="url(#sbGrad)" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <defs>
+          <linearGradient id="sbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00f5ff"/>
+            <stop offset="100%" stop-color="#7c3aed"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="sb-brand">
+        <span class="sb-title">HoneyShield</span>
+        <span class="sb-sub">SECURITY OPS</span>
+      </div>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">// NAVIGATION</div>
+    <ul class="sb-nav">
+      <li class="active" onclick="navigateTo('user-dashboard.html')">
+        <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span>Dashboard</span>
+        <div class="nav-indicator"></div>
+      </li>
+      <li onclick="navigateTo('services.html')">
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Services</span>
+      </li>
+      <li onclick="navigateTo('activity-logs.html')">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h10M3 15h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Activity Logs</span>
+      </li>
+      <li onclick="navigateTo('settings.html')">
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 1.5A8.5 8.5 0 1 0 10 18.5 8.5 8.5 0 0 0 10 1.5z" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/></svg>
+        <span>Settings</span>
+      </li>
+    </ul>
+    <div class="sb-divider" style="margin-top:auto"></div>
+    <div class="sb-section-label">// SYSTEM</div>
+    <div class="sb-status-block">
+      <div class="sb-status-row"><span class="sb-status-dot green"></span><span>Honeypot LIVE</span></div>
+      <div class="sb-status-row"><span class="sb-status-dot cyan"></span><span>TLS Active</span></div>
+      <div class="sb-status-row"><span class="sb-status-dot violet"></span><span>Monitor ON</span></div>
+    </div>
+    <button class="sb-logout" onclick="logout()">
+      <svg viewBox="0 0 20 20" fill="none"><path d="M13 3h4v14h-4M8 14l4-4-4-4M12 10H3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Disconnect</span>
+    </button>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main" style="display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;">Security Dashboard</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted)" id="topbarOrg">// HoneyShield Operator</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-clock" id="clock">--:--:--</div>
+        <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--green)">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--green);animation:livePulse 2s ease-in-out infinite;display:inline-block"></span>
+          SYSTEM ONLINE
+        </div>
+        <div class="topbar-user">
+          <div class="user-avatar" id="userAvatar">OP</div>
+          <div class="user-info">
+            <span class="user-name" id="userName">Operator</span>
+            <span class="user-role">SECURITY OPS</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- LIVE TICKER -->
+    <div class="ticker-wrap">
+      <div class="ticker-badge">
+        <div class="ticker-dot"></div>LIVE
+      </div>
+      <div class="ticker-track">
+        <div class="ticker-inner" id="tickerInner"></div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- STAT CARDS -->
+      <div class="stat-row">
+        <div class="scard cyan">
+          <div class="scard-label">// Operator ID</div>
+          <div class="scard-val" id="statEmail" style="font-size:13px;padding-top:6px">—</div>
+          <div class="scard-sub" id="statOrg">—</div>
+        </div>
+        <div class="scard violet">
+          <div class="scard-label">// Login Attempts</div>
+          <div class="scard-val" id="statLogins">0</div>
+          <div class="scard-sub">Total auth events</div>
+        </div>
+        <div class="scard red">
+          <div class="scard-label">// Blocked Threats</div>
+          <div class="scard-val" id="statBlocked">0</div>
+          <div class="scard-sub">Attack events caught</div>
+        </div>
+        <div class="scard green">
+          <div class="scard-label">// Success Rate</div>
+          <div class="scard-val" id="statSuccess">0%</div>
+          <div class="scard-sub">Auth success ratio</div>
+        </div>
+      </div>
+
+      <!-- MID ROW -->
+      <div class="mid-row">
+        <!-- SUCCESS RATE -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">📊 Auth Success Rate</div>
+          </div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
+            <div class="rate-row">
+              <div class="rate-lbl">Successful</div>
+              <div class="rate-track"><div class="rate-fill green" id="rateSuccess"></div></div>
+              <div class="rate-pct green" id="ratePctSuccess">0%</div>
+            </div>
+            <div class="rate-row">
+              <div class="rate-lbl">Blocked</div>
+              <div class="rate-track"><div class="rate-fill red" id="rateFail"></div></div>
+              <div class="rate-pct red" id="ratePctFail">0%</div>
+            </div>
+            <div style="margin-top:4px;padding:14px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:9px">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">// Active Service</div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span id="svcName" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text)">None</span>
+                <span id="svcBadge" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;padding:3px 10px;border-radius:20px;background:rgba(100,116,139,0.15);color:#64748b;text-transform:uppercase">INACTIVE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LIVE ATTACKS -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">⚡ Live Threats <span style="font-size:10px;color:rgba(226,232,240,0.2);font-family:'JetBrains Mono',monospace">(Simulated)</span></div>
+            <button class="btn-refresh" onclick="refreshAttacks()">↺ REFRESH</button>
+          </div>
+          <div class="live-list" id="liveList"></div>
+        </div>
+      </div>
+
+      <!-- CHARTS -->
+      <div class="charts-row">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">📈 Auth Trends</div></div>
+          <div class="panel-body"><div class="chart-canvas-wrap"><canvas id="authChart"></canvas></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">🎯 Attack Distribution</div></div>
+          <div class="panel-body"><div class="chart-canvas-wrap"><canvas id="attackChart"></canvas></div></div>
+        </div>
+      </div>
+
+      <!-- BREAKDOWN -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">🛡️ Attack Breakdown by Type</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(226,232,240,0.2)" id="breakdownTotal">0 total events</div>
+        </div>
+        <div class="breakdown-grid" id="breakdownGrid"></div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+// ── MATRIX ────────────────────────────────────────────────────────
+const mc=document.getElementById('matrix-canvas'),mct=mc.getContext('2d');
+function rsz(){mc.width=innerWidth;mc.height=innerHeight}
+rsz();window.addEventListener('resize',rsz);
+const chars='01アイウエオカキクケコ!@#$%^&';
+let cols=[];
+function initC(){cols=Array.from({length:Math.floor(mc.width/16)},()=>Math.random()*-mc.height)}
+initC();window.addEventListener('resize',initC);
+setInterval(()=>{
+  mct.fillStyle='rgba(3,1,10,.07)';mct.fillRect(0,0,mc.width,mc.height);
+  mct.font='12px JetBrains Mono';
+  cols.forEach((y,i)=>{
+    const a=0.3+Math.random()*0.4;
+    mct.fillStyle=Math.random()>.95?`rgba(0,245,255,${a})`:`rgba(124,58,237,${a*0.4})`;
+    mct.fillText(chars[Math.floor(Math.random()*chars.length)],i*16,y);
+    if(y>mc.height&&Math.random()>.975)cols[i]=0;
+    cols[i]+=14;
+  });
+},55);
+
+// ── CLOCK ─────────────────────────────────────────────────────────
+setInterval(()=>{
+  document.getElementById('clock').textContent=new Date().toTimeString().split(' ')[0]+' UTC';
+},1000);
+
+// ── NAV ───────────────────────────────────────────────────────────
+function navigateTo(page){
+  window.location.href=page;
+}
+function logout(){localStorage.removeItem('user');window.location.href='login.html'}
+
+// ── AUTH CHECK ────────────────────────────────────────────────────
+const _ud=localStorage.getItem('user');
+if(!_ud){window.location.href='login.html';}
+const user=JSON.parse(_ud||'{}');
+
+// ── USER INFO ─────────────────────────────────────────────────────
+document.getElementById('statEmail').textContent    = user.email||'—';
+document.getElementById('statOrg').textContent      = user.organization||'No org set';
+document.getElementById('topbarOrg').textContent    = '// '+(user.organization||'HoneyShield Operator');
+const nm = user.name||user.email||'Operator';
+document.getElementById('userName').textContent     = nm;
+document.getElementById('userAvatar').textContent   = nm[0].toUpperCase();
+
+// ── ATTACK CATS ───────────────────────────────────────────────────
+const ATTACK_CATS=[
+  {key:'BRUTE_FORCE',   label:'Brute Force',   icon:'🔪',cls:'brute'},
+  {key:'SQL_INJECTION', label:'SQL Injection',  icon:'💉',cls:'sql'},
+  {key:'XSS_ATTACK',    label:'XSS Attack',     icon:'🎯',cls:'xss'},
+  {key:'DDOS_ATTACK',   label:'DDoS Attack',    icon:'🌊',cls:'ddos'},
+  {key:'CSRF_TEST',     label:'CSRF',           icon:'🔗',cls:'csrf'},
+  {key:'KEYLOGGER',     label:'Keylogger',      icon:'⌨️',cls:'keylog'},
+  {key:'FILE_UPLOAD',   label:'File Upload',    icon:'📁',cls:'fileup'},
+  {key:'PATH_TRAVERSAL',label:'Path Traversal', icon:'🗂️',cls:'traversal'},
+  {key:'RATE_LIMIT',    label:'Rate Limit',     icon:'⚡',cls:'ratelimit'},
+  {key:'HONEYPOT',      label:'Honeypot Hit',   icon:'🍯',cls:'honeypot'},
+];
+const AUTH_KEYS=['AUTH','LOGIN','LOGIN_SUCCESS','LOGIN_FAIL'];
+function isAuth(l){if(!l.type)return false;const t=l.type.toUpperCase();return AUTH_KEYS.some(k=>t.includes(k))}
+function isAttack(l){if(!l.type)return false;const t=l.type.toUpperCase();return ATTACK_CATS.some(c=>t.includes(c.key))}
+function countCats(logs){
+  const c={OTHER:0};ATTACK_CATS.forEach(x=>c[x.key]=0);
+  logs.forEach(l=>{
+    if(!l.type)return;const t=l.type.toUpperCase();
+    const m=ATTACK_CATS.find(x=>t.includes(x.key));
+    if(m)c[m.key]++;else if(!isAuth(l))c.OTHER++;
+  });
+  return c;
+}
+
+// ── LOAD DASHBOARD ────────────────────────────────────────────────
+async function loadDashboard(){
+  try{
+    const userId=user._id||user.id;
+    const res=await fetch(`http://localhost:3000/api/logs?userId=${userId}`);
+    const logs=(await res.json())||[];
+    const userLogs=logs.filter(l=>!l.userId||l.userId===userId||l.userId?.toString()===userId?.toString()||l.email===user.email);
+
+    const authLogs   = userLogs.filter(isAuth);
+    const attackLogs = userLogs.filter(isAttack);
+    const cats       = countCats(userLogs);
+    const totalAtk   = Object.values(cats).reduce((a,b)=>a+b,0);
+
+    const loginCount   = authLogs.length||userLogs.length;
+    const blockedCount = attackLogs.length;
+    const successCount = Math.max(0,loginCount-blockedCount);
+    const successPct   = loginCount>0?Math.round(successCount/loginCount*100):0;
+    const failPct      = 100-successPct;
+
+    document.getElementById('statLogins').textContent  = loginCount;
+    document.getElementById('statBlocked').textContent = blockedCount;
+    document.getElementById('statSuccess').textContent = successPct+'%';
+
+    setTimeout(()=>{
+      document.getElementById('rateSuccess').style.width=successPct+'%';
+      document.getElementById('rateFail').style.width=failPct+'%';
+      document.getElementById('ratePctSuccess').textContent=successPct+'%';
+      document.getElementById('ratePctFail').textContent=failPct+'%';
+    },400);
+
+    if(user.service&&user.service!=='none'&&user.service!==''){
+      const svcName=user.service.charAt(0).toUpperCase()+user.service.slice(1);
+      document.getElementById('svcName').textContent=svcName;
+      document.getElementById('svcBadge').textContent='ACTIVE';
+      document.getElementById('svcBadge').style.cssText='font-family:JetBrains Mono,monospace;font-size:9px;letter-spacing:1.5px;padding:3px 10px;border-radius:20px;background:rgba(0,245,196,0.12);color:#00f5c4;text-transform:uppercase';
+    }
+
+    renderBreakdown(cats,totalAtk);
+    buildAttackChart(cats);
+    buildAuthChart(userLogs);
+  }catch(e){
+    console.error('Dashboard load error:',e);
+    renderBreakdown({BRUTE_FORCE:0,SQL_INJECTION:0,XSS_ATTACK:0,DDOS_ATTACK:0,CSRF_TEST:0,KEYLOGGER:0,FILE_UPLOAD:0,PATH_TRAVERSAL:0,RATE_LIMIT:0,HONEYPOT:0,OTHER:0},1);
+  }
+}
+
+// ── BREAKDOWN ─────────────────────────────────────────────────────
+function renderBreakdown(cats,total){
+  const grid=document.getElementById('breakdownGrid');
+  document.getElementById('breakdownTotal').textContent=total+' total events';
+  const all=[
+    ...ATTACK_CATS.map(c=>({...c,count:cats[c.key]})),
+    {key:'OTHER',label:'Other',icon:'❓',cls:'other',count:cats.OTHER}
+  ].sort((a,b)=>b.count-a.count);
+  grid.innerHTML=all.map((item,i)=>{
+    const pct=total>0?Math.round(item.count/total*100):0;
+    return `<div class="bd-card ${item.cls}" style="animation:slideUp 0.3s ${i*0.04}s ease both" onclick="location.href='activity-logs.html'">
+      <div class="bd-icon">${item.icon}</div>
+      <div class="bd-num ${item.count===0?'zero':''}">${item.count}</div>
+      <div class="bd-name">${item.label}</div>
+      <div class="bd-bar"><div class="bd-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── CHARTS ────────────────────────────────────────────────────────
+let authChartInst=null,atkChartInst=null;
+function buildAuthChart(logs){
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const authD=new Array(7).fill(0),atkD=new Array(7).fill(0);
+  logs.forEach(l=>{
+    const d=new Date(l.createdAt).getDay();const idx=d===0?6:d-1;
+    if(isAuth(l))authD[idx]++;if(isAttack(l))atkD[idx]++;
+  });
+  if(authChartInst)authChartInst.destroy();
+  authChartInst=new Chart(document.getElementById('authChart'),{
+    type:'line',
+    data:{labels:days,datasets:[
+      {label:'Auth Events',data:authD,borderColor:'#00f5c4',backgroundColor:'rgba(0,245,196,0.08)',borderWidth:2,tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#00f5c4'},
+      {label:'Attack Events',data:atkD,borderColor:'#ff3b6b',backgroundColor:'rgba(255,59,107,0.08)',borderWidth:2,tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#ff3b6b'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
+      scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b'}},x:{grid:{display:false},ticks:{color:'#64748b'}}}}
+  });
+}
+function buildAttackChart(cats){
+  const colors=['#ef4444','#f97316','#eab308','#8b5cf6','#3b82f6','#ec4899','#14b8a6','#f59e0b','#6366f1','#10b981','#64748b'];
+  const entries=[...ATTACK_CATS.map((c,i)=>({label:c.label,val:cats[c.key],color:colors[i]})),{label:'Other',val:cats.OTHER,color:'#64748b'}].filter(e=>e.val>0);
+  if(!entries.length)entries.push({label:'No Data',val:1,color:'#1e293b'});
+  if(atkChartInst)atkChartInst.destroy();
+  atkChartInst=new Chart(document.getElementById('attackChart'),{
+    type:'doughnut',
+    data:{labels:entries.map(e=>e.label),datasets:[{data:entries.map(e=>e.val),backgroundColor:entries.map(e=>e.color),borderColor:'rgba(255,255,255,0.06)',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{labels:{color:'#94a3b8',font:{size:10},padding:10}}}}
+  });
+}
+
+// ── LIVE ATTACKS ──────────────────────────────────────────────────
+const ATTACK_TYPES=[
+  {name:'BRUTE_FORCE',sev:'critical',icon:'🔪',color:'#ff3b6b'},
+  {name:'SQL_INJECTION',sev:'critical',icon:'💉',color:'#ff3b6b'},
+  {name:'XSS_ATTEMPT',sev:'high',icon:'🎯',color:'#f97316'},
+  {name:'CREDENTIAL_STUFFING',sev:'high',icon:'🗝️',color:'#f97316'},
+  {name:'DDOS_ATTEMPT',sev:'critical',icon:'🌊',color:'#ff3b6b'},
+  {name:'HONEYPOT_HIT',sev:'medium',icon:'🍯',color:'#f59e0b'},
+  {name:'PHISHING',sev:'high',icon:'🎣',color:'#f97316'},
+  {name:'PORT_SCAN',sev:'medium',icon:'🔍',color:'#f59e0b'},
+];
+const FAKE_IPS=['192.168.1.45','10.0.0.78','172.16.0.33','203.0.113.99','185.220.101.45','198.51.100.55','91.108.4.1','64.233.160.0'];
+function refreshAttacks(){
+  const list=document.getElementById('liveList');
+  list.innerHTML=Array.from({length:5+Math.floor(Math.random()*4)},(_,i)=>{
+    const t=ATTACK_TYPES[Math.floor(Math.random()*ATTACK_TYPES.length)];
+    const ip=FAKE_IPS[Math.floor(Math.random()*FAKE_IPS.length)];
+    const m=Math.floor(Math.random()*20);
+    return `<div class="live-item" style="animation:slideIn 0.3s ${i*0.05}s ease both">
+      <div class="live-sev" style="background:${t.color}"></div>
+      <div class="live-icon">${t.icon}</div>
+      <div style="flex:1">
+        <div class="live-name">${t.name}</div>
+        <div class="live-sev-lbl" style="color:${t.color}">${t.sev}</div>
+      </div>
+      <div class="live-right">
+        <div class="live-ip">${ip}</div>
+        <div class="live-time">${m===0?'Just now':m+'m ago'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── TICKER ────────────────────────────────────────────────────────
+const TICK_EVS=[
+  {cls:'critical',icon:'🔪',type:'BRUTE_FORCE',    ip:'185.220.101.45',time:'Just now'},
+  {cls:'critical',icon:'💉',type:'SQL_INJECTION',  ip:'203.0.113.99',  time:'1m ago'},
+  {cls:'ok',      icon:'✅',type:'AUTH_SUCCESS',   ip:'10.0.0.78',     time:'2m ago'},
+  {cls:'high',    icon:'🎯',type:'XSS_ATTEMPT',    ip:'104.21.45.67',  time:'3m ago'},
+  {cls:'critical',icon:'🌊',type:'DDOS_ATTEMPT',   ip:'172.16.0.33',   time:'5m ago'},
+  {cls:'medium',  icon:'🍯',type:'HONEYPOT_HIT',   ip:'198.51.100.55', time:'7m ago'},
+  {cls:'high',    icon:'🔗',type:'CSRF_TEST',       ip:'216.58.194.174',time:'9m ago'},
+  {cls:'high',    icon:'🗂️',type:'PATH_TRAVERSAL', ip:'8.8.8.8',       time:'11m ago'},
+  {cls:'ok',      icon:'✅',type:'AUTH_SUCCESS',   ip:'192.168.1.45',  time:'13m ago'},
+  {cls:'medium',  icon:'⚡',type:'RATE_LIMIT_HIT', ip:'64.233.160.0',  time:'15m ago'},
+];
+function buildTicker(){
+  const inner=document.getElementById('tickerInner');
+  const all=[...TICK_EVS,...TICK_EVS];
+  inner.innerHTML=all.map(e=>`
+    <span class="tick-ev ${e.cls}">
+      <span>${e.icon}</span>
+      <span class="t-type">${e.type}</span>
+      <span style="color:rgba(226,232,240,0.2)">from</span>
+      <span class="t-ip">${e.ip}</span>
+      <span class="t-time">${e.time}</span>
+    </span>`).join('');
+}
+function injectLiveEvent(){
+  const pool=TICK_EVS.filter(e=>e.cls!=='ok');
+  const e=pool[Math.floor(Math.random()*pool.length)];
+  const randIPs=['45.33.32.156','198.199.72.1','159.65.1.1','165.22.54.1'];
+  TICK_EVS.unshift({...e,ip:randIPs[Math.floor(Math.random()*randIPs.length)],time:'Just now'});
+  if(TICK_EVS.length>14)TICK_EVS.pop();
+  buildTicker();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+buildTicker();
+setInterval(injectLiveEvent,8000);
+loadDashboard();
+refreshAttacks();
+</script>
+</body>
+</html>

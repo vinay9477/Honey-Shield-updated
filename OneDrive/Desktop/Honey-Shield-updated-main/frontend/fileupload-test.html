@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>File Upload Validation Test</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #fcd34d, #fef3c7);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .test-container {
+      background: #ffffff;
+      width: 420px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #fde047;
+      color: #713f12;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      margin: 10px 0;
+      color: #111827;
+    }
+
+    p {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 2px dashed #d1d5db;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      background: #f59e0b;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #d97706;
+    }
+
+    .info {
+      margin-top: 15px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .warning {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #b91c1c;
+    }
+
+    .blocked {
+      color: #b91c1c;
+      background: #fee2e2;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .success {
+      color: #166534;
+      background: #dcfce7;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .file-info {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #374151;
+      background: #f3f4f6;
+      padding: 8px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="test-container">
+
+  <span class="badge">File Upload Test</span>
+
+  <h2>📤 File Upload Validation</h2>
+
+  <p>
+    This page tests file upload protection.
+    Try uploading invalid file types or files over 5MB.
+  </p>
+
+  <form id="testForm">
+    <input type="file" id="fileInput" required>
+    <button type="submit">Upload File</button>
+  </form>
+
+  <div class="info">
+    Allowed types: JPG, PNG, PDF<br>
+    Max size: 5MB
+  </div>
+
+  <div id="fileInfo" class="file-info" style="display: none;"></div>
+  <div id="result"></div>
+
+  <div class="warning">
+    This test does not affect real users or production data.
+  </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // Get userId from localStorage
+  function getUserId() {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user._id || user.id || user.email || "ANONYMOUS";
+  }
+
+  const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+  const maxFileSize = 5 * 1024 * 1024; // 5MB
+
+  const form = document.getElementById("testForm");
+  const fileInput = document.getElementById("fileInput");
+  const fileInfoDiv = document.getElementById("fileInfo");
+  const resultDiv = document.getElementById("result");
+
+  // Show file info when file is selected
+  fileInput.addEventListener("change", function () {
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      fileInfoDiv.style.display = "block";
+      fileInfoDiv.innerHTML = "<b>File:</b> " + file.name + "<br><b>Size:</b> " + (file.size / 1024).toFixed(2) + " KB<br><b>Type:</b> " + file.type;
+    }
+  });
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    if (fileInput.files.length === 0) {
+      resultDiv.className = "blocked";
+      resultDiv.innerHTML = "<b>✗ No File Selected</b>";
+      return;
+    }
+
+    const file = fileInput.files[0];
+
+    // Check file type
+    if (!allowedTypes.includes(file.type)) {
+      resultDiv.className = "blocked";
+      resultDiv.innerHTML = "<b>✗ Invalid File Type!</b><br>Allowed: JPG, PNG, PDF<br>Received: " + file.type;
+
+      fetch("http://localhost:3000/api/logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({userId: getUserId(),
+          ip: "INTERNAL_TEST",
+          type: "INVALID_FILE_TYPE",
+          message: "File upload rejected - invalid type: " + file.type
+        })
+      })
+      .catch(err => console.error("Log error:", err));
+
+      return;
+    }
+
+    // Check file size
+    if (file.size > maxFileSize) {
+      resultDiv.className = "blocked";
+      resultDiv.innerHTML = "<b>✗ File Too Large!</b><br>Max size: 5MB<br>Received: " + (file.size / 1024 / 1024).toFixed(2) + "MB";
+
+      fetch("http://localhost:3000/api/logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({userId: getUserId(),
+          ip: "INTERNAL_TEST",
+          type: "OVERSIZED_FILE",
+          message: "File upload rejected - size exceeded: " + (file.size / 1024 / 1024).toFixed(2) + "MB"
+        })
+      })
+      .catch(err => console.error("Log error:", err));
+
+      return;
+    }
+
+    // File is valid
+    resultDiv.className = "success";
+    resultDiv.innerHTML = "<b>✓ File Accepted</b><br>File: " + file.name + "<br>Size: " + (file.size / 1024).toFixed(2) + " KB";
+  });
+
+});
+</script>
+<script src="public/js/common.js"></script>
+
+</body>
+</html>

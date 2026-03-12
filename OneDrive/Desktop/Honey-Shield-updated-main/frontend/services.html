@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services | HoneyShield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="public/css/cyber-dashboard.css">
+  <style>
+    /* ── PAGE-SPECIFIC ─────────────────────────────────────── */
+    .services-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .services-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .services-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .active-badge-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--green);
+      background: rgba(0,245,196,0.07);
+      border: 1px solid rgba(0,245,196,0.18);
+      border-radius: 20px;
+      padding: 6px 14px;
+    }
+    .active-badge-bar .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    /* FILTER TABS */
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .ftab {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 7px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .ftab:hover { border-color: rgba(0,245,255,0.3); color: var(--cyan); }
+    .ftab.active {
+      background: rgba(0,245,255,0.08);
+      border-color: rgba(0,245,255,0.35);
+      color: var(--cyan);
+    }
+
+    /* SERVICES GRID */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 18px;
+      margin-bottom: 40px;
+    }
+
+    /* SERVICE CARD */
+    .svc-card {
+      position: relative;
+      background: rgba(13,11,22,0.8);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      overflow: hidden;
+      transition: all .25s;
+      animation: cardIn .4s cubic-bezier(.16,1,.3,1) both;
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .svc-card:hover {
+      border-color: rgba(0,245,255,0.2);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    }
+    .svc-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      opacity: 0;
+      transition: opacity .25s;
+    }
+    .svc-card:hover::before { opacity: 1; }
+    .svc-card.active-svc { border-color: rgba(0,245,196,0.3); }
+    .svc-card.active-svc::before { opacity: 1; background: linear-gradient(90deg, var(--green), var(--cyan)); }
+
+    /* card colour accent by type */
+    .svc-card.type-honeypot::before  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .svc-card.type-bot::before       { background: linear-gradient(90deg, var(--cyan), var(--violet)); }
+    .svc-card.type-sql::before       { background: linear-gradient(90deg, #f97316, #fb923c); }
+    .svc-card.type-xss::before       { background: linear-gradient(90deg, #eab308, #facc15); }
+    .svc-card.type-csrf::before      { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+    .svc-card.type-bruteforce::before{ background: linear-gradient(90deg, var(--red), #ff6b6b); }
+    .svc-card.type-ratelimit::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+    .svc-card.type-traversal::before { background: linear-gradient(90deg, #ec4899, #f472b6); }
+    .svc-card.type-fileupload::before{ background: linear-gradient(90deg, #14b8a6, #2dd4bf); }
+    .svc-card.type-ddos::before      { background: linear-gradient(90deg, var(--violet), #a855f7); }
+    .svc-card.type-keylogger::before { background: linear-gradient(90deg, #06b6d4, #22d3ee); }
+
+    .svc-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .svc-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .svc-status-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid;
+    }
+    .svc-status-pill.inactive {
+      color: var(--muted);
+      border-color: var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+    .svc-status-pill.active {
+      color: var(--green);
+      border-color: rgba(0,245,196,0.3);
+      background: rgba(0,245,196,0.07);
+    }
+    .svc-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .svc-cat {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .svc-desc {
+      font-size: 13px;
+      color: rgba(226,232,240,0.55);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    .svc-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .svc-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .svc-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-activate {
+      flex: 1;
+      padding: 10px;
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all .2s;
+      background: linear-gradient(135deg, var(--violet), #5b21b6);
+      color: white;
+      box-shadow: 0 4px 16px rgba(124,58,237,0.25);
+    }
+    .btn-activate:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124,58,237,0.4); }
+    .btn-activate.active-state {
+      background: linear-gradient(135deg, rgba(0,245,196,0.15), rgba(0,245,196,0.08));
+      border: 1px solid rgba(0,245,196,0.3);
+      color: var(--green);
+      box-shadow: none;
+    }
+    .btn-activate.active-state:hover { box-shadow: 0 4px 16px rgba(0,245,196,0.2); }
+    .btn-code {
+      padding: 10px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-code:hover { border-color: rgba(0,245,255,0.3); color: var(--cyan); }
+
+    /* ── CODE MODAL ────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(3,1,10,0.85);
+      backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal {
+      width: 100%; max-width: 660px;
+      background: #0d0b16;
+      border: 1px solid rgba(0,245,255,0.15);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+      transform: translateY(20px);
+      transition: transform .3s cubic-bezier(.16,1,.3,1);
+    }
+    .modal-overlay.show .modal { transform: translateY(0); }
+    .modal-head {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .modal-close {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+    }
+    .modal-close:hover { color: var(--red); border-color: rgba(255,59,107,0.3); }
+    .modal-body { padding: 20px 24px 24px; }
+    .modal-desc {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    .code-block {
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 18px;
+      overflow-x: auto;
+      max-height: 340px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+    .code-block pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      color: rgba(226,232,240,0.8);
+      white-space: pre;
+      margin: 0;
+    }
+    .modal-foot {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-copy {
+      flex: 1;
+      padding: 11px;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      color: #03010a;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-copy:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-copy.copied {
+      background: linear-gradient(135deg, var(--green), #00e5b0);
+    }
+    .btn-close-modal {
+      padding: 11px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-test {
+      padding: 10px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      border: 1px solid rgba(0,245,196,0.2);
+      border-radius: 8px;
+      background: rgba(0,245,196,0.04);
+      color: rgba(0,245,196,0.6);
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .btn-test:hover { border-color: rgba(0,245,196,0.4); color: var(--green); background: rgba(0,245,196,0.08); }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 28px; right: 28px;
+      z-index: 200;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: .5px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      background: rgba(0,245,196,0.1);
+      border: 1px solid rgba(0,245,196,0.25);
+      color: var(--green);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transform: translateY(60px);
+      opacity: 0;
+      transition: all .3s cubic-bezier(.16,1,.3,1);
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { background: rgba(255,59,107,0.1); border-color: rgba(255,59,107,0.25); color: var(--red); }
+  </style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+<div class="mesh-bg"></div>
+<div class="grid-overlay"></div>
+
+<div class="layout">
+
+  <!-- SIDEBAR (same as dashboard) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <svg class="sb-shield" viewBox="0 0 40 40" fill="none">
+        <path d="M20 3L5 9V20C5 27.5 11.5 34.5 20 37C28.5 34.5 35 27.5 35 20V9L20 3Z"
+              stroke="url(#sbGrad)" stroke-width="1.5" fill="rgba(0,245,255,0.05)"/>
+        <path d="M13 20L17.5 24.5L27 15" stroke="url(#sbGrad)" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <defs>
+          <linearGradient id="sbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00f5ff"/>
+            <stop offset="100%" stop-color="#7c3aed"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="sb-brand">
+        <span class="sb-title">HoneyShield</span>
+        <span class="sb-sub">SECURITY OPS</span>
+      </div>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">// NAVIGATION</div>
+    <ul class="sb-nav">
+      <li onclick="navigateTo('user-dashboard.html')">
+        <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span>Dashboard</span>
+      </li>
+      <li class="active" onclick="navigateTo('services.html')">
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Services</span>
+        <div class="nav-indicator"></div>
+      </li>
+      <li onclick="navigateTo('activity-logs.html')">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h10M3 15h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Activity Logs</span>
+      </li>
+      <li onclick="navigateTo('settings.html')">
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 1.5A8.5 8.5 0 1 0 10 18.5 8.5 8.5 0 0 0 10 1.5z" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/></svg>
+        <span>Settings</span>
+      </li>
+    </ul>
+    <div class="sb-divider" style="margin-top:auto"></div>
+    <div class="sb-section-label">// SYSTEM</div>
+    <div class="sb-status-block">
+      <div class="sb-status-row"><span class="sb-status-dot green"></span><span>Honeypot LIVE</span></div>
+      <div class="sb-status-row"><span class="sb-status-dot cyan"></span><span>TLS Active</span></div>
+      <div class="sb-status-row"><span class="sb-status-dot violet"></span><span>Monitor ON</span></div>
+    </div>
+    <button class="sb-logout" onclick="logout()">
+      <svg viewBox="0 0 20 20" fill="none"><path d="M13 3h4v14h-4M8 14l4-4-4-4M12 10H3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Disconnect</span>
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="mainContent">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">
+          <span class="topbar-label">// SECURITY SERVICES</span>
+          <div class="topbar-live">
+            <span class="live-dot"></span>
+            PROTECTION MODULES
+          </div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-clock" id="topClock">--:--:--</div>
+        <div class="topbar-user">
+          <div class="user-avatar" id="userAvatar">OP</div>
+          <div class="user-info">
+            <span class="user-name" id="userName">Operator</span>
+            <span class="user-role">SECURITY OPS</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- SERVICES HEADER -->
+    <div class="services-header">
+      <div>
+        <div class="services-title">Protection Modules</div>
+        <div class="services-sub">// 11 security shields available — activate to deploy</div>
+      </div>
+      <div class="active-badge-bar">
+        <div class="dot"></div>
+        <span id="activeServiceLabel">No service active</span>
+      </div>
+    </div>
+
+    <!-- FILTER TABS -->
+    <div class="filter-tabs">
+      <button class="ftab active" onclick="filterCards('all', this)">ALL</button>
+      <button class="ftab" onclick="filterCards('injection', this)">INJECTION</button>
+      <button class="ftab" onclick="filterCards('auth', this)">AUTH</button>
+      <button class="ftab" onclick="filterCards('network', this)">NETWORK</button>
+      <button class="ftab" onclick="filterCards('file', this)">FILE</button>
+    </div>
+
+    <!-- SERVICES GRID -->
+    <div class="services-grid" id="servicesGrid"></div>
+
+  </main>
+</div>
+
+<!-- CODE MODAL -->
+<div class="modal-overlay" id="codeModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">Integration Code</div>
+      <button class="modal-close" onclick="hideModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-desc" id="modalDesc">Paste this snippet into your frontend to activate protection.</div>
+      <div class="code-block">
+        <pre id="modalCode"></pre>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-copy" id="copyBtn" onclick="copyCode()">COPY CODE</button>
+        <button class="btn-close-modal" onclick="hideModal()">CLOSE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CLOCK ──────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('topClock').textContent =
+    new Date().toTimeString().split(' ')[0] + ' UTC';
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ── MATRIX BG ─────────────────────────────────────────────
+const canvas = document.getElementById('matrix-canvas');
+const ctx    = canvas.getContext('2d');
+function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+resize(); window.addEventListener('resize', resize);
+const chars = '01アイウエオカキクケコ!@#$%^&*';
+let cols = [];
+function initCols() {
+  cols = [];
+  for (let i = 0; i < Math.floor(canvas.width / 16); i++)
+    cols[i] = Math.random() * -canvas.height;
+}
+initCols(); window.addEventListener('resize', initCols);
+setInterval(() => {
+  ctx.fillStyle = 'rgba(3,1,10,.06)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '12px JetBrains Mono, monospace';
+  cols.forEach((y, i) => {
+    const a = 0.3 + Math.random() * 0.5;
+    ctx.fillStyle = Math.random() > 0.95
+      ? `rgba(0,245,255,${a})`
+      : `rgba(124,58,237,${a * 0.4})`;
+    ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 16, y);
+    if (y > canvas.height && Math.random() > 0.975) cols[i] = 0;
+    cols[i] += 14;
+  });
+}, 55);
+
+// ── NAV ────────────────────────────────────────────────────
+function navigateTo(page) {
+  document.getElementById('mainContent').style.opacity = '0';
+  document.getElementById('mainContent').style.transform = 'translateY(8px)';
+  setTimeout(() => { window.location.href = page; }, 250);
+}
+function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+
+// ── SERVICES DATA ──────────────────────────────────────────
+const SERVICES = [
+  {
+    id: 'honeypot', icon: '🍯', name: 'Honeypot Protection',
+    cat: 'DECEPTION', tags: ['honeypot', 'network'],
+    group: 'network',
+    desc: 'Redirects suspicious users to a controlled decoy. Records malicious behavior for deep analysis.',
+    best: 'Login pages, admin panels',
+    code: `<!-- Honeypot Protection -->
+<script>
+let attempts = 0, lastTime = Date.now();
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  const now = Date.now();
+  attempts = (now - lastTime < 3000) ? attempts + 1 : 1;
+  lastTime = now;
+  if (attempts >= 3) {
+    e.preventDefault();
+    window.location.href = "http://localhost:4000";
+  }
+});
+<\/script>`
+  },
+  {
+    id: 'bot', icon: '🤖', name: 'Bot Filtering',
+    cat: 'DETECTION', tags: ['bot', 'auth'],
+    group: 'auth',
+    desc: 'Detects and blocks automated bots using hidden honeypot fields that real users never touch.',
+    best: 'Public websites, registration forms',
+    code: `<!-- Bot Filtering -->
+<input type="text" name="company_name" style="display:none">
+<script>
+document.querySelector("form").addEventListener("submit", function(e) {
+  if (document.querySelector("[name='company_name']").value !== "") {
+    e.preventDefault();
+    console.warn("Bot detected and blocked.");
+  }
+});
+<\/script>`
+  },
+  {
+    id: 'sql', icon: '💉', name: 'SQL Injection Prevention',
+    cat: 'INJECTION', tags: ['sql', 'injection'],
+    group: 'injection',
+    desc: 'Blocks malicious SQL patterns in user input before they ever reach the database layer.',
+    best: 'Database-backed apps',
+    code: `<!-- SQL Injection Prevention -->
+<script>
+document.querySelector("form").addEventListener("submit", function(e) {
+  const inputs = document.querySelectorAll("input");
+  for (let i of inputs) {
+    if (/('|--|;|\b(OR|AND)\b)/i.test(i.value)) {
+      e.preventDefault();
+      alert("Malicious input detected.");
+      return;
+    }
+  }
+});
+<\/script>`
+  },
+  {
+    id: 'xss', icon: '🎯', name: 'XSS Protection',
+    cat: 'INJECTION', tags: ['xss', 'injection'],
+    group: 'injection',
+    desc: 'Detects and sanitizes malicious script injection in user-generated content before rendering.',
+    best: 'Web apps with user content',
+    code: `<!-- XSS Protection -->
+<script>
+function sanitize(input) {
+  const d = document.createElement('div');
+  d.textContent = input;
+  return d.innerHTML;
+}
+document.querySelector("form").addEventListener("submit", function(e) {
+  const inputs = document.querySelectorAll("input, textarea");
+  for (let i of inputs) {
+    if (/<|>|script|iframe|onclick|onerror|javascript:/i.test(i.value)) {
+      e.preventDefault();
+      alert("XSS attempt blocked.");
+      return;
+    }
+    i.value = sanitize(i.value);
+  }
+});
+<\/script>`
+  },
+  {
+    id: 'csrf', icon: '🔗', name: 'CSRF Token Protection',
+    cat: 'AUTH', tags: ['csrf', 'auth'],
+    group: 'auth',
+    desc: 'Prevents unauthorized cross-site requests by injecting and validating unique session tokens.',
+    best: 'Forms and state-changing API endpoints',
+    code: `<!-- CSRF Token Protection -->
+<script>
+function genToken() { return 'csrf_' + Math.random().toString(36).substr(2, 9); }
+const token = genToken();
+const inp = document.createElement('input');
+inp.type = 'hidden'; inp.name = '_csrf'; inp.value = token;
+document.querySelector("form").appendChild(inp);
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  if (!document.querySelector('[name="_csrf"]').value) {
+    e.preventDefault();
+    alert("CSRF validation failed.");
+  }
+});
+<\/script>`
+  },
+  {
+    id: 'bruteforce', icon: '🔪', name: 'Brute Force Detection',
+    cat: 'AUTH', tags: ['bruteforce', 'auth'],
+    group: 'auth',
+    desc: 'Implements progressive account lockout after multiple failed login attempts are detected.',
+    best: 'Login and auth pages',
+    code: `<!-- Brute Force Detection -->
+<script>
+const MAX = 5, LOCK = 15 * 60 * 1000;
+let log = JSON.parse(localStorage.getItem('bf') || '{}');
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  const user = document.querySelector('input[name="email"]')?.value || 'default';
+  const now  = Date.now();
+  if (!log[user]) log[user] = { count: 0, last: now };
+  if (now - log[user].last > LOCK) log[user].count = 0;
+  if (log[user].count >= MAX) {
+    e.preventDefault();
+    alert("Account locked. Try again in 15 minutes.");
+    return;
+  }
+  log[user].count++;
+  log[user].last = now;
+  localStorage.setItem('bf', JSON.stringify(log));
+});
+<\/script>`
+  },
+  {
+    id: 'ratelimit', icon: '⚡', name: 'Rate Limiting',
+    cat: 'NETWORK', tags: ['ratelimit', 'network'],
+    group: 'network',
+    desc: 'Throttles excessive requests per user within a configurable time window to prevent abuse.',
+    best: 'APIs and public endpoints',
+    code: `<!-- Rate Limiting -->
+<script>
+const LIMIT = 10, WINDOW = 60000;
+let log = JSON.parse(localStorage.getItem('rl') || '[]');
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  const now = Date.now();
+  log = log.filter(t => now - t < WINDOW);
+  if (log.length >= LIMIT) {
+    e.preventDefault();
+    alert("Too many requests. Please wait.");
+    return;
+  }
+  log.push(now);
+  localStorage.setItem('rl', JSON.stringify(log));
+});
+<\/script>`
+  },
+  {
+    id: 'traversal', icon: '🗂️', name: 'Path Traversal Prevention',
+    cat: 'FILE', tags: ['traversal', 'file'],
+    group: 'file',
+    desc: 'Blocks attempts to access restricted files via "../" and absolute path manipulation attacks.',
+    best: 'File download / serving applications',
+    code: `<!-- Path Traversal Prevention -->
+<script>
+function isMalicious(path) {
+  return /\.\.|\\|:\//.test(path) || path.startsWith('/') || path.startsWith('\\');
+}
+document.querySelector("form").addEventListener("submit", function(e) {
+  const fi = document.querySelector('input[type="file"]');
+  if (fi && isMalicious(fi.value)) {
+    e.preventDefault();
+    alert("Invalid file path detected.");
+  }
+});
+<\/script>`
+  },
+  {
+    id: 'fileupload', icon: '📁', name: 'File Upload Validation',
+    cat: 'FILE', tags: ['fileupload', 'file'],
+    group: 'file',
+    desc: 'Validates file type, size, and MIME type before acceptance to prevent malicious uploads.',
+    best: 'File upload forms',
+    code: `<!-- File Upload Validation -->
+<script>
+const ALLOWED = ['image/jpeg','image/png','application/pdf'];
+const MAX_MB  = 5 * 1024 * 1024;
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  const fi = document.querySelector('input[type="file"]');
+  if (fi && fi.files.length > 0) {
+    const f = fi.files[0];
+    if (!ALLOWED.includes(f.type)) {
+      e.preventDefault();
+      alert("Invalid file type. Allowed: JPG, PNG, PDF");
+      return;
+    }
+    if (f.size > MAX_MB) {
+      e.preventDefault();
+      alert("File too large. Max 5MB.");
+    }
+  }
+});
+<\/script>`
+  },
+  {
+    id: 'ddos', icon: '🌊', name: 'DDoS Protection',
+    cat: 'NETWORK', tags: ['ddos', 'network'],
+    group: 'network',
+    desc: 'Detects and mitigates distributed denial-of-service patterns through real-time traffic analysis.',
+    best: 'High-traffic applications',
+    code: `<!-- DDoS Protection -->
+<script>
+const THRESHOLD = { req: 100, window: 10000 };
+let ts = [];
+
+function checkDDoS() {
+  const now = Date.now();
+  ts = ts.filter(t => now - t < THRESHOLD.window);
+  if (ts.length > THRESHOLD.req) {
+    alert("Suspicious activity detected. Access restricted.");
+    return false;
+  }
+  ts.push(now);
+  return true;
+}
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  if (!checkDDoS()) e.preventDefault();
+});
+<\/script>`
+  },
+  {
+    id: 'keylogger', icon: '⌨️', name: 'Keylogger Detection',
+    cat: 'AUTH', tags: ['keylogger', 'auth'],
+    group: 'auth',
+    desc: 'Monitors for suspicious keyboard event patterns that indicate client-side keylogging activity.',
+    best: 'Sensitive forms: login, payment, PII',
+    code: `<!-- Keylogger Detection -->
+<script>
+let flagged = false;
+let keys    = [];
+
+document.addEventListener("keydown", function(e) {
+  const now = Date.now();
+  keys.push({ key: e.key, time: now });
+  keys = keys.filter(k => now - k.time < 5000);
+  if (keys.length > 100) { flagged = true; console.warn("Keylogger suspected."); }
+});
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  if (flagged) {
+    e.preventDefault();
+    alert("Security alert: Suspicious input activity detected.");
+  }
+});
+<\/script>`
+  }
+];
+
+// ── RUN TEST ───────────────────────────────────────────────
+function runTest(id) {
+  const pages = {
+    honeypot:   'honeypot-test.html',
+    bot:        'bot-test.html',
+    sql:        'sql-test.html',
+    xss:        'xss-test.html',
+    csrf:       'csrf-test.html',
+    bruteforce: 'bruteforce-test.html',
+    ratelimit:  'ratelimit-test.html',
+    traversal:  'traversal-test.html',
+    fileupload: 'fileupload-test.html',
+    ddos:       'ddos-test.html',
+    keylogger:  'keylogger-test.html'
+  };
+  if (pages[id]) {
+    navigateTo(pages[id]);
+  } else {
+    showToast('Test page not available yet', 'error');
+  }
+}
+let currentActive = null;
+
+function loadActiveService() {
+  const raw = localStorage.getItem('user');
+  if (!raw) return;
+  const user = JSON.parse(raw);
+  currentActive = user.service || null;
+  const label = document.getElementById('activeServiceLabel');
+  if (currentActive) {
+    const found = SERVICES.find(s => s.id === currentActive);
+    label.textContent = (found ? found.name : currentActive) + ' · ACTIVE';
+  } else {
+    label.textContent = 'No service active';
+  }
+}
+
+// ── RENDER CARDS ───────────────────────────────────────────
+function renderCards(filter) {
+  const grid = document.getElementById('servicesGrid');
+  grid.innerHTML = '';
+  const list = filter === 'all'
+    ? SERVICES
+    : SERVICES.filter(s => s.group === filter);
+
+  list.forEach((s, i) => {
+    const isActive = s.id === currentActive;
+    const card = document.createElement('div');
+    card.className = `svc-card type-${s.id}${isActive ? ' active-svc' : ''}`;
+    card.style.animationDelay = `${i * 0.05}s`;
+    card.dataset.group = s.group;
+
+    card.innerHTML = `
+      <div class="svc-card-top">
+        <div class="svc-icon">${s.icon}</div>
+        <div class="svc-status-pill ${isActive ? 'active' : 'inactive'}">
+          ${isActive ? '● ACTIVE' : '○ IDLE'}
+        </div>
+      </div>
+      <div class="svc-name">${s.name}</div>
+      <div class="svc-cat">// ${s.cat}</div>
+      <div class="svc-desc">${s.desc}</div>
+      <div class="svc-tags">
+        <span class="svc-tag">Best for: ${s.best}</span>
+      </div>
+      <div class="svc-actions">
+        <button class="btn-activate ${isActive ? 'active-state' : ''}"
+                onclick="activateService('${s.id}')">
+          ${isActive ? '✓ ACTIVATED' : 'ACTIVATE'}
+        </button>
+        <button class="btn-code" onclick="showCode('${s.id}')">
+          &lt;/&gt; CODE
+        </button>
+        <button class="btn-test" onclick="runTest('${s.id}')">
+          ▶ TEST
+        </button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ── FILTER ─────────────────────────────────────────────────
+function filterCards(group, btn) {
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards(group);
+}
+
+// ── ACTIVATE ───────────────────────────────────────────────
+function activateService(id) {
+  const raw = localStorage.getItem('user');
+  if (!raw) { window.location.href = 'login.html'; return; }
+  const user = JSON.parse(raw);
+
+  if (currentActive === id) {
+    // Deactivate
+    user.service = null;
+    currentActive = null;
+    showToast('Service deactivated', 'error');
+  } else {
+    user.service = id;
+    currentActive = id;
+    const svc = SERVICES.find(s => s.id === id);
+    showToast(`${svc.name} activated ✓`);
+  }
+  localStorage.setItem('user', JSON.stringify(user));
+  loadActiveService();
+
+  // Re-render current filter
+  const activeTab = document.querySelector('.ftab.active');
+  const currentGroup = activeTab ? activeTab.textContent.trim().toLowerCase() : 'all';
+  renderCards(currentGroup === 'all' ? 'all' : currentGroup);
+}
+
+// ── CODE MODAL ─────────────────────────────────────────────
+function showCode(id) {
+  const svc = SERVICES.find(s => s.id === id);
+  if (!svc) return;
+  document.getElementById('modalTitle').textContent = svc.name + ' — Integration Code';
+  document.getElementById('modalDesc').textContent =
+    `Paste this snippet into your frontend to enable ${svc.name}. Best for: ${svc.best}.`;
+  document.getElementById('modalCode').textContent = svc.code;
+  document.getElementById('copyBtn').textContent = 'COPY CODE';
+  document.getElementById('copyBtn').classList.remove('copied');
+  document.getElementById('codeModal').classList.add('show');
+}
+
+function hideModal() {
+  document.getElementById('codeModal').classList.remove('show');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('codeModal')) hideModal();
+}
+
+function copyCode() {
+  const code = document.getElementById('modalCode').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ COPIED!';
+    btn.classList.add('copied');
+    showToast('Code copied to clipboard ✓');
+    setTimeout(() => { btn.textContent = 'COPY CODE'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── TOAST ──────────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  setTimeout(() => { t.classList.remove('show'); }, 2500);
+}
+
+// ── INIT ───────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const raw = localStorage.getItem('user');
+  if (!raw) { window.location.href = 'login.html'; return; }
+  const user = JSON.parse(raw);
+
+  const avatarEl = document.getElementById('userAvatar');
+  const nameEl   = document.getElementById('userName');
+  if (user.name) {
+    avatarEl.textContent = user.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    nameEl.textContent   = user.name;
+  } else if (user.email) {
+    avatarEl.textContent = user.email[0].toUpperCase();
+    nameEl.textContent   = user.email.split('@')[0];
+  }
+
+  loadActiveService();
+  renderCards('all');
+
+  // Fade in
+  const main = document.getElementById('mainContent');
+  main.style.opacity = '0';
+  main.style.transform = 'translateY(12px)';
+  requestAnimationFrame(() => {
+    main.style.transition = 'opacity .5s ease, transform .5s ease';
+    main.style.opacity    = '1';
+    main.style.transform  = 'translateY(0)';
+  });
+});
+</script>
+
+<script src="public/js/common.js"></script>
+</body>
+</html>

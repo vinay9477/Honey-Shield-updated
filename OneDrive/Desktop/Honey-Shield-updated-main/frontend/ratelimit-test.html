@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rate Limiting Test</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #dbeafe, #eff6ff);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .test-container {
+      background: #ffffff;
+      width: 420px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #bfdbfe;
+      color: #1e40af;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      margin: 10px 0;
+      color: #111827;
+    }
+
+    p {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .info {
+      margin-top: 15px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .warning {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #b91c1c;
+    }
+
+    .request-counter {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #374151;
+      padding: 10px;
+      background: #f3f4f6;
+      border-radius: 6px;
+    }
+
+    .blocked {
+      color: #b91c1c;
+      background: #fee2e2;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .success {
+      color: #166534;
+      background: #dcfce7;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="test-container">
+
+  <span class="badge">Rate Limit Test</span>
+
+  <h2>⏱️ Rate Limiting Test</h2>
+
+  <p>
+    This page tests rate limiting protection.
+    Make rapid requests to trigger throttling.
+  </p>
+
+  <button id="requestBtn" type="button">Make API Request</button>
+
+  <div class="info">
+    Rate limit: <b>10 requests per 60 seconds</b>
+  </div>
+
+  <div class="request-counter">
+    Requests: <span id="requestCount">0</span>/10
+  </div>
+
+  <div id="result"></div>
+
+  <div class="warning">
+    This test does not affect real users or production data.
+  </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // Get userId from localStorage
+  function getUserId() {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user._id || user.id || user.email || "ANONYMOUS";
+  }
+
+  const rateLimit = { maxRequests: 10, timeWindow: 60000 }; // 10 requests per minute
+  let requestLog = JSON.parse(localStorage.getItem('rateLimitTest')) || [];
+
+  const requestBtn = document.getElementById("requestBtn");
+  const resultDiv = document.getElementById("result");
+  const requestCountSpan = document.getElementById("requestCount");
+
+  function updateCounter() {
+    const now = Date.now();
+    requestLog = requestLog.filter(time => now - time < rateLimit.timeWindow);
+    requestCountSpan.textContent = requestLog.length;
+  }
+
+  updateCounter();
+
+  requestBtn.addEventListener("click", function () {
+    const now = Date.now();
+    requestLog = requestLog.filter(time => now - time < rateLimit.timeWindow);
+
+    if (requestLog.length >= rateLimit.maxRequests) {
+      resultDiv.className = "blocked";
+      resultDiv.innerHTML = "<b>✗ Rate Limit Exceeded!</b><br>Too many requests. Wait before trying again.";
+      requestBtn.disabled = true;
+
+      // Re-enable after some time
+      setTimeout(() => {
+        requestBtn.disabled = false;
+        requestLog = [];
+        updateCounter();
+      }, 5000);
+
+      fetch("http://localhost:3000/api/logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({userId: getUserId(),
+          ip: "INTERNAL_TEST",
+          type: "RATE_LIMIT",
+          message: "Rate limit exceeded - too many requests detected"
+        })
+      })
+      .catch(err => console.error("Log error:", err));
+
+      return;
+    }
+
+    requestLog.push(now);
+    localStorage.setItem('rateLimitTest', JSON.stringify(requestLog));
+
+    resultDiv.className = "success";
+    resultDiv.innerHTML = "<b>✓ Request Accepted</b><br>Requests remaining: " + (rateLimit.maxRequests - requestLog.length);
+
+    updateCounter();
+  });
+
+});
+</script>
+<script src="public/js/common.js"></script>
+
+</body>
+</html>

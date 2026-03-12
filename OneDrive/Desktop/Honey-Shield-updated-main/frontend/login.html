@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | HoneyShield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#03010a;--card:#0d0b16;--border:rgba(255,255,255,0.07);--cyan:#00f5ff;--violet:#7c3aed;--pink:#f000ff;--text:#e2e8f0;--muted:rgba(226,232,240,0.4);--red:#ff3b6b;--green:#00f5c4}
+    html,body{height:100%}
+    body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    #matrix{position:fixed;inset:0;z-index:0;opacity:0.06;pointer-events:none}
+    .glow{position:fixed;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0}
+    .glow-1{width:500px;height:500px;background:rgba(124,58,237,0.13);top:-120px;right:-120px}
+    .glow-2{width:420px;height:420px;background:rgba(0,245,255,0.08);bottom:-120px;left:-120px}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,245,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.025) 1px,transparent 1px);background-size:60px 60px}
+    .card{position:relative;z-index:1;width:100%;max-width:440px;margin:24px 16px;background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.6);animation:cardIn .5s cubic-bezier(.16,1,.3,1) both}
+    @keyframes cardIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--violet),var(--cyan),var(--pink),var(--violet));background-size:300%;animation:borderFlow 4s linear infinite}
+    @keyframes borderFlow{from{background-position:0%}to{background-position:300%}}
+    .card-head{padding:28px 36px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px}
+    .shield-wrap{width:44px;height:44px;border-radius:12px;background:rgba(0,245,255,0.06);border:1px solid rgba(0,245,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:shieldFloat 3s ease-in-out infinite}
+    @keyframes shieldFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+    .head-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--cyan);text-transform:uppercase;margin-bottom:3px}
+    .head-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .card-body{padding:28px 36px;display:flex;flex-direction:column;gap:18px}
+    .field{display:flex;flex-direction:column;gap:7px}
+    .field label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+    .field input{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:13px 14px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;width:100%}
+    .field input:focus{border-color:rgba(0,245,255,0.4);box-shadow:0 0 0 3px rgba(0,245,255,0.06)}
+    .field input::placeholder{color:rgba(226,232,240,0.2)}
+    .field-error{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--red);letter-spacing:.5px;min-height:14px}
+    .pw-wrap{position:relative}
+    .pw-wrap input{padding-right:60px}
+    .pw-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);cursor:pointer;background:none;border:none;transition:color .2s}
+    .pw-toggle:hover{color:var(--cyan)}
+    .options-row{display:flex;align-items:center;justify-content:space-between;margin-top:-4px}
+    .remember{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);cursor:pointer}
+    .remember input[type="checkbox"]{accent-color:var(--cyan);width:14px;height:14px}
+    .forgot{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);text-decoration:none;transition:color .2s}
+    .forgot:hover{color:var(--cyan)}
+    .verify-banner{display:none;padding:12px 14px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:8px;font-size:12px;color:#fbbf24;line-height:1.5}
+    .verify-banner.show{display:block}
+    .verify-banner a{color:var(--cyan);font-weight:600;text-decoration:underline;cursor:pointer}
+    .status-msg{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.5px;padding:11px 14px;border-radius:8px;display:none;text-align:center}
+    .status-msg.error{background:rgba(255,59,107,0.1);color:var(--red);border:1px solid rgba(255,59,107,0.2);display:block}
+    .status-msg.success{background:rgba(0,245,196,0.1);color:var(--green);border:1px solid rgba(0,245,196,0.2);display:block}
+    .status-msg.warn{background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2);display:block}
+    .btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--violet),#5b21b6);border:none;border-radius:10px;color:white;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(124,58,237,0.3)}
+    .btn-login:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,58,237,0.45)}
+    .btn-login:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .card-foot{padding:16px 36px;border-top:1px solid var(--border);text-align:center;font-size:13px;color:var(--muted)}
+    .card-foot a{color:var(--cyan);text-decoration:none;font-weight:500}
+    .card-foot a:hover{text-decoration:underline}
+    .lock-overlay{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(3,1,10,0.93);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .3s}
+    .lock-overlay.show{opacity:1;pointer-events:all}
+    .lock-icon{font-size:56px;animation:lockPop .4s cubic-bezier(.16,1,.3,1) both}
+    @keyframes lockPop{from{transform:scale(0.5)}to{transform:scale(1)}}
+    .lock-msg{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;text-align:center}
+    .lock-sub{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-align:center}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+    .shake{animation:shake .4s ease}
+    @keyframes particle{from{opacity:1;transform:translate(-50%,-50%)}to{opacity:0;transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty)))}}
+  </style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+<div class="grid-bg"></div>
+
+<div class="card">
+  <div class="lock-overlay" id="lockOverlay">
+    <div class="lock-icon" id="lockIcon">🔒</div>
+    <div class="lock-msg" id="lockMsg" style="color:var(--text)">AUTHENTICATING</div>
+    <div class="lock-sub" id="lockSub" style="color:var(--muted)">Please wait...</div>
+  </div>
+
+  <div class="card-head">
+    <div class="shield-wrap">
+      <svg width="26" height="26" viewBox="0 0 44 44" fill="none">
+        <path d="M22 3L5 10V22C5 30.5 12.5 38 22 41C31.5 38 39 30.5 39 22V10L22 3Z" stroke="url(#sg)" stroke-width="1.5" fill="rgba(0,245,255,0.05)"/>
+        <path d="M15 22L19.5 26.5L29 17" stroke="url(#sg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <defs><linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00f5ff"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs>
+      </svg>
+    </div>
+    <div>
+      <div class="head-eyebrow">// operator access</div>
+      <div class="head-title">HoneyShield</div>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <div class="field">
+      <label>// Operator ID</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email"
+             oninput="clrErr('emailErr')" onkeydown="if(event.key==='Enter')login()">
+      <div class="field-error" id="emailErr"></div>
+    </div>
+    <div class="field">
+      <label>// Access Key</label>
+      <div class="pw-wrap">
+        <input type="password" id="password" placeholder="Your password" autocomplete="current-password"
+               oninput="clrErr('passwordErr')" onkeydown="if(event.key==='Enter')login()">
+        <button class="pw-toggle" type="button" onclick="togglePw()">SHOW</button>
+      </div>
+      <div class="field-error" id="passwordErr"></div>
+    </div>
+    <div class="options-row">
+      <label class="remember"><input type="checkbox" id="remember"> REMEMBER ME</label>
+      <a class="forgot" href="#">FORGOT KEY?</a>
+    </div>
+    <div class="verify-banner" id="verifyBanner">
+      ⚠ Email not verified. Check your inbox for the OTP code, or
+      <a onclick="window.location.href='register.html'">re-register to get a new code →</a>
+    </div>
+    <div class="status-msg" id="statusMsg"></div>
+    <button class="btn-login" id="loginBtn" onclick="login()">AUTHENTICATE</button>
+  </div>
+
+  <div class="card-foot">
+    No account? <a href="register.html">Create one →</a>
+    &nbsp;·&nbsp;
+    <a href="index.html" style="color:var(--muted)">← Back</a>
+  </div>
+</div>
+
+<script>
+// Matrix BG
+const mc=document.getElementById('matrix'),mct=mc.getContext('2d');
+function rsz(){mc.width=innerWidth;mc.height=innerHeight}
+rsz();window.addEventListener('resize',rsz);
+const chars='01アイウエオカキクケコ!@#$%^&';
+let cols=[];
+function initC(){cols=Array.from({length:Math.floor(mc.width/16)},()=>Math.random()*-mc.height)}
+initC();window.addEventListener('resize',initC);
+setInterval(()=>{
+  mct.fillStyle='rgba(3,1,10,.07)';mct.fillRect(0,0,mc.width,mc.height);
+  mct.font='12px JetBrains Mono';
+  cols.forEach((y,i)=>{
+    const a=0.3+Math.random()*0.4;
+    mct.fillStyle=Math.random()>.95?`rgba(0,245,255,${a})`:`rgba(124,58,237,${a*0.4})`;
+    mct.fillText(chars[Math.floor(Math.random()*chars.length)],i*16,y);
+    if(y>mc.height&&Math.random()>.975)cols[i]=0;
+    cols[i]+=14;
+  });
+},55);
+
+// Redirect if logged in
+if(localStorage.getItem('user')) window.location.href='user-dashboard.html';
+
+// Brute force tracker
+let attempts=[];
+const TIME_LIMIT=3000;
+
+function clrErr(id){document.getElementById(id).textContent=''}
+function setErr(id,msg){document.getElementById(id).textContent='>> '+msg}
+function setStatus(msg,type){const el=document.getElementById('statusMsg');el.textContent=msg;el.className='status-msg '+type}
+
+function togglePw(){
+  const inp=document.getElementById('password'),btn=document.querySelector('.pw-toggle');
+  inp.type=inp.type==='password'?'text':'password';
+  btn.textContent=inp.type==='password'?'SHOW':'HIDE';
+}
+
+function showLock(success){
+  const overlay=document.getElementById('lockOverlay');
+  const icon=document.getElementById('lockIcon');
+  const msg=document.getElementById('lockMsg');
+  const sub=document.getElementById('lockSub');
+  overlay.classList.add('show');
+  if(success){
+    icon.textContent='🔓';
+    msg.style.color='var(--green)';msg.textContent='ACCESS GRANTED';
+    sub.style.color='var(--green)';sub.textContent='Redirecting to dashboard...';
+    spawnParticles('#00f5c4');
+  } else {
+    icon.textContent='🚫';
+    msg.style.color='var(--red)';msg.textContent='ACCESS DENIED';
+    sub.style.color='var(--red)';sub.textContent='Invalid credentials';
+    document.querySelector('.card').classList.add('shake');
+    setTimeout(()=>{
+      document.querySelector('.card').classList.remove('shake');
+      overlay.classList.remove('show');
+      icon.textContent='🔒';
+      msg.style.color='var(--text)';msg.textContent='AUTHENTICATING';
+      sub.style.color='var(--muted)';sub.textContent='Please wait...';
+    },1600);
+  }
+}
+
+function spawnParticles(color){
+  const overlay=document.getElementById('lockOverlay');
+  for(let i=0;i<16;i++){
+    const p=document.createElement('div');
+    const angle=(i/16)*360;
+    const dist=60+Math.random()*60;
+    p.style.cssText=`position:absolute;width:5px;height:5px;border-radius:50%;background:${color};top:50%;left:50%;transform:translate(-50%,-50%);animation:particle .8s ease-out ${i*0.03}s forwards;--tx:${Math.cos(angle*Math.PI/180)*dist}px;--ty:${Math.sin(angle*Math.PI/180)*dist}px;`;
+    overlay.appendChild(p);
+    setTimeout(()=>p.remove(),1000);
+  }
+}
+
+async function login(){
+  clrErr('emailErr');clrErr('passwordErr');
+  document.getElementById('statusMsg').className='status-msg';
+  document.getElementById('verifyBanner').classList.remove('show');
+
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+
+  let ok=true;
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){setErr('emailErr','Valid email required');ok=false}
+  if(!password||password.length<6){setErr('passwordErr','Password must be at least 6 characters');ok=false}
+  if(!ok)return;
+
+  // Brute force / honeypot trap
+  const now=Date.now();
+  attempts.push(now);
+  attempts=attempts.filter(t=>now-t<=TIME_LIMIT);
+  if(attempts.length>=3){window.location.href='http://localhost:4000';return}
+
+  const btn=document.getElementById('loginBtn');
+  btn.textContent='VERIFYING...';btn.disabled=true;
+
+  try{
+    const res=await fetch('http://localhost:3000/api/auth/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password})
+    });
+    const data=await res.json();
+
+    if(res.ok&&data.message==='Login successful'){
+      const userData={email,...data.user,_id:data.user._id||data.user.id||email};
+      localStorage.setItem('user',JSON.stringify(userData));
+      showLock(true);
+      setTimeout(()=>{window.location.href='user-dashboard.html'},2800);
+
+    } else if(data.needsVerification){
+      btn.textContent='AUTHENTICATE';btn.disabled=false;
+      document.getElementById('verifyBanner').classList.add('show');
+      setStatus('>> Email not verified — check your inbox for OTP','warn');
+
+    } else {
+      btn.textContent='AUTHENTICATE';btn.disabled=false;
+      showLock(false);
+      setStatus('>> '+(data.message||'Invalid credentials'),'error');
+    }
+  } catch(err){
+    btn.textContent='AUTHENTICATE';btn.disabled=false;
+    setStatus('>> Connection error — server not reachable','error');
+  }
+}
+</script>
+</body>
+</html>
