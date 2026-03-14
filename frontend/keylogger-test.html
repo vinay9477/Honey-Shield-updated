@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Keylogger Detection Test</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #e9d5ff, #f3e8ff);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .test-container {
+      background: #ffffff;
+      width: 420px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #e9d5ff;
+      color: #6b21a8;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      margin: 10px 0;
+      color: #111827;
+    }
+
+    p {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      background: #a855f7;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #9333ea;
+    }
+
+    .info {
+      margin-top: 15px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .warning {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #b91c1c;
+    }
+
+    .keypress-counter {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #374151;
+      padding: 10px;
+      background: #f3f4f6;
+      border-radius: 6px;
+    }
+
+    .suspicious {
+      color: #b91c1c;
+      background: #fee2e2;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .success {
+      color: #166534;
+      background: #dcfce7;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="test-container">
+
+  <span class="badge">Keylogger Test</span>
+
+  <h2>⌨️ Keylogger Detection Test</h2>
+
+  <p>
+    This page detects suspicious keyboard activity patterns
+    that might indicate keylogging attempts.
+  </p>
+
+  <form id="testForm">
+    <textarea placeholder="Type here to test keylogger detection..." required></textarea>
+    <button type="submit">Submit Form</button>
+  </form>
+
+  <div class="info">
+    Detection trigger: <b>100+ keypresses in 5 seconds</b>
+  </div>
+
+  <div class="keypress-counter">
+    Keypresses (5s window): <span id="keypressCount">0</span>
+  </div>
+
+  <div id="result"></div>
+
+  <div class="warning">
+    This test does not affect real users or production data.
+  </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // Get userId from localStorage
+  function getUserId() {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user._id || user.id || user.email || "ANONYMOUS";
+  }
+
+  let suspiciousActivity = false;
+  let keyPresses = [];
+  const form = document.getElementById("testForm");
+  const resultDiv = document.getElementById("result");
+  const keypressCountSpan = document.getElementById("keypressCount");
+
+  document.addEventListener("keydown", function(e) {
+    keyPresses.push({ key: e.key, time: Date.now() });
+
+    // Remove old entries (outside 5 second window)
+    const now = Date.now();
+    keyPresses = keyPresses.filter(k => now - k.time < 5000);
+
+    // Update counter
+    keypressCountSpan.textContent = keyPresses.length;
+
+    // Check for suspicious patterns
+    if (keyPresses.length > 100) {
+      console.warn('Potential keylogger detected!');
+      suspiciousActivity = true;
+      keypressCountSpan.parentElement.style.background = '#fee2e2';
+    }
+  });
+
+  form.addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    if (suspiciousActivity) {
+      resultDiv.className = "suspicious";
+      resultDiv.innerHTML = "<b>⚠️ Suspicious Activity Detected!</b><br>Abnormal keyboard activity pattern detected. This may indicate a keylogger.";
+
+      fetch("http://localhost:3000/api/logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({userId: getUserId(),
+          ip: "INTERNAL_TEST",
+          type: "KEYLOGGER_DETECTED",
+          message: "Suspicious keyboard activity detected - potential keylogger"
+        })
+      })
+      .catch(err => console.error("Log error:", err));
+
+    } else {
+      resultDiv.className = "success";
+      resultDiv.innerHTML = "<b>✓ No Suspicious Activity</b><br>Keyboard activity appears normal. No keylogger detected.";
+    }
+  });
+
+});
+</script>
+<script src="public/js/common.js"></script>
+
+</body>
+</html>

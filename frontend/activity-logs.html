@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity Logs | Honey Shield - Security Logs</title>
+  <link rel="stylesheet" href="public/css/dashboard.css">
+  <style>
+    .page-transition {
+      animation: fadeIn 0.4s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .main {
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    .filters-panel {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-group input,
+    .filter-group select {
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .filter-group input::placeholder {
+      color: #64748b;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(37, 99, 235, 0.5);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .filter-buttons button {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 13px;
+    }
+
+    .btn-clear {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-clear:hover {
+      background: rgba(239, 68, 68, 0.3);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    .btn-apply {
+      background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+      color: white;
+    }
+
+    .btn-apply:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+    }
+
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .log-table thead {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .log-table th {
+      padding: 16px;
+      text-align: left;
+      color: #cbd5e1;
+      font-weight: 600;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .log-table th:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+    }
+
+    .log-table th.sortable::after {
+      content: " ↕";
+      opacity: 0.5;
+    }
+
+    .log-table th.sort-asc::after {
+      content: " ↑";
+      opacity: 1;
+      color: #10b981;
+    }
+
+    .log-table th.sort-desc::after {
+      content: " ↓";
+      opacity: 1;
+      color: #ef4444;
+    }
+
+    .log-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+    }
+
+    .log-table tbody tr {
+      transition: all 0.2s ease;
+    }
+
+    .log-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .log-empty {
+      text-align: center;
+      padding: 40px !important;
+      color: #64748b;
+      font-style: italic;
+    }
+
+    .log-type-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .type-auth { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+    .type-honeypot { background: rgba(251, 146, 60, 0.2); color: #fbcf8c; }
+    .type-error { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+    .type-unknown { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+
+    .ip-address {
+      font-family: 'Courier New', monospace;
+      background: rgba(251, 191, 36, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #fcd34d;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(37, 99, 235, 0.2);
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-container {
+      text-align: center;
+      padding: 40px 20px;
+      color: #94a3b8;
+    }
+
+    .loading-text {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>Honey Shield</h2>
+    <ul>
+      <li onclick="navigateTo('user-dashboard.html')">Dashboard</li>
+      <li onclick="navigateTo('services.html')">Services</li>
+      <li class="active" onclick="navigateTo('activity-logs.html')">Activity Logs</li>
+      <li onclick="navigateTo('settings.html')">Settings</li>
+    </ul>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <header class="topbar">
+      <h3>Activity Logs</h3>
+      <button onclick="logout()">Logout</button>
+    </header>
+
+    <!-- Filters Panel -->
+    <div class="filters-panel">
+      <div class="filter-group">
+        <label for="typeFilter">Log Type</label>
+        <select id="typeFilter">
+          <option value="">All Types</option>
+          <option value="AUTH">Authentication</option>
+          <option value="HONEYPOT">Honeypot</option>
+          <option value="ERROR">Error</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="ipSearch">Search IP Address</label>
+        <input type="text" id="ipSearch" placeholder="e.g. 192.168.1.45">
+      </div>
+
+      <div class="filter-group">
+        <label for="dateFrom">From Date</label>
+        <input type="date" id="dateFrom">
+      </div>
+
+      <div class="filter-group">
+        <label for="dateTo">To Date</label>
+        <input type="date" id="dateTo">
+      </div>
+
+      <div class="filter-buttons">
+        <button class="btn-clear" onclick="clearFilters()">Clear</button>
+        <button class="btn-apply" onclick="applyFilters()">Apply</button>
+      </div>
+    </div>
+
+    <!-- Logs Table -->
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th class="sortable" onclick="sortTable('time')">Time</th>
+          <th class="sortable" onclick="sortTable('type')">Type</th>
+          <th class="sortable" onclick="sortTable('ip')">Source IP</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody id="logBody">
+        <tr>
+          <td colspan="4" class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading activity logs...</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </main>
+
+</div>
+
+<script>
+  let allLogs = [];
+  let filteredLogs = [];
+  let currentSort = { field: null, direction: 'asc' };
+
+  function navigateTo(page) {
+    document.querySelector('.main').style.opacity = '0';
+    setTimeout(() => {
+      window.location.href = page;
+    }, 200);
+  }
+
+  function logout() {
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
+  }
+
+  // Smooth transition on page load
+  window.addEventListener('load', () => {
+    document.querySelector('.main').style.opacity = '1';
+    document.querySelector('.main').style.transition = 'opacity 0.4s ease-in';
+  });
+
+  // Generate realistic mock logs if API fails
+  function generateMockLogs() {
+    const types = ['AUTH', 'HONEYPOT', 'ERROR'];
+    const ips = ['192.168.1.45', '10.0.0.78', '172.16.0.33', '203.0.113.99', '198.51.100.55', '8.8.8.8', '1.1.1.1'];
+    const messages = [
+      'Login attempt',
+      'Honeypot triggered',
+      'Authentication failed',
+      'Database query error',
+      'API timeout',
+      'Invalid credentials',
+      'Brute force detected'
+    ];
+
+    const logs = [];
+    for (let i = 0; i < 15; i++) {
+      const date = new Date();
+      date.setHours(date.getHours() - Math.random() * 24);
+      logs.push({
+        createdAt: date.toISOString(),
+        type: types[Math.floor(Math.random() * types.length)],
+        ip: ips[Math.floor(Math.random() * ips.length)],
+        message: messages[Math.floor(Math.random() * messages.length)]
+      });
+    }
+    return logs;
+  }
+
+  // Get badge class for log type
+  function getTypeBadgeClass(type) {
+    switch (type) {
+      case 'AUTH': return 'type-auth';
+      case 'HONEYPOT': return 'type-honeypot';
+      case 'ERROR': return 'type-error';
+      default: return 'type-unknown';
+    }
+  }
+
+  // Render logs to table
+  function renderLogs(logsToRender) {
+    const body = document.getElementById("logBody");
+    body.innerHTML = "";
+
+    if (!logsToRender || logsToRender.length === 0) {
+      body.innerHTML = '<tr><td colspan="4" class="log-empty">No logs found matching your filters</td></tr>';
+      return;
+    }
+
+    logsToRender.forEach(log => {
+      const timestamp = new Date(log.createdAt).toLocaleString('en-IN');
+      const type = log.type || "UNKNOWN";
+      const ip = log.ip || "N/A";
+      const message = log.message || "N/A";
+
+      body.innerHTML += `
+        <tr>
+          <td>${timestamp}</td>
+          <td><span class="log-type-badge ${getTypeBadgeClass(type)}">${type}</span></td>
+          <td><span class="ip-address">${ip}</span></td>
+          <td>${message}</td>
+        </tr>
+      `;
+    });
+  }
+
+  // Sort table
+  function sortTable(field) {
+    const th = document.querySelector(`th[onclick*="${field}"]`);
+
+    // Remove sort classes
+    document.querySelectorAll('th').forEach(h => {
+      h.classList.remove('sort-asc', 'sort-desc');
+    });
+
+    // Toggle direction
+    if (currentSort.field === field) {
+      currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      currentSort.direction = 'asc';
+      currentSort.field = field;
+    }
+
+    // Apply sort
+    filteredLogs.sort((a, b) => {
+      let aVal = a[field === 'time' ? 'createdAt' : field];
+      let bVal = b[field === 'time' ? 'createdAt' : field];
+
+      if (field === 'time') {
+        aVal = new Date(aVal);
+        bVal = new Date(bVal);
+      } else {
+        aVal = String(aVal).toLowerCase();
+        bVal = String(bVal).toLowerCase();
+      }
+
+      if (currentSort.direction === 'asc') {
+        return aVal > bVal ? 1 : -1;
+      } else {
+        return aVal < bVal ? 1 : -1;
+      }
+    });
+
+    th.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+    renderLogs(filteredLogs);
+  }
+
+  // Apply filters
+  function applyFilters() {
+    const typeFilter = document.getElementById('typeFilter').value;
+    const ipSearch = document.getElementById('ipSearch').value.toLowerCase();
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+
+    filteredLogs = allLogs.filter(log => {
+      // Type filter
+      if (typeFilter && log.type !== typeFilter) return false;
+
+      // IP search
+      if (ipSearch && !log.ip.toLowerCase().includes(ipSearch)) return false;
+
+      // Date range
+      if (dateFrom) {
+        const logDate = new Date(log.createdAt);
+        const filterDate = new Date(dateFrom);
+        if (logDate < filterDate) return false;
+      }
+
+      if (dateTo) {
+        const logDate = new Date(log.createdAt);
+        const filterDate = new Date(dateTo);
+        filterDate.setHours(23, 59, 59, 999);
+        if (logDate > filterDate) return false;
+      }
+
+      return true;
+    });
+
+    renderLogs(filteredLogs);
+  }
+
+  // Clear filters
+  function clearFilters() {
+    document.getElementById('typeFilter').value = '';
+    document.getElementById('ipSearch').value = '';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    document.querySelectorAll('th').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+
+    filteredLogs = [...allLogs];
+    currentSort = { field: null, direction: 'asc' };
+    renderLogs(filteredLogs);
+  }
+
+  // Fetch logs from API
+  function fetchLogs() {
+    const userData = localStorage.getItem("user");
+    if (!userData) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const user = JSON.parse(userData);
+    const userId = user._id || user.id;
+
+    fetch(`http://localhost:3000/api/logs?userId=${userId}`)
+      .then(res => res.json())
+      .then(logs => {
+        // Filter logs for current user only
+        allLogs = (logs || []).filter(log =>
+          !log.userId || log.userId === userId || log.user === userId || log.email === user.email
+        );
+        filteredLogs = [...allLogs];
+        renderLogs(filteredLogs);
+      })
+      .catch(err => {
+        console.error("FETCH ERROR:", err);
+        allLogs = generateMockLogs();
+        filteredLogs = [...allLogs];
+        renderLogs(filteredLogs);
+      });
+  }
+
+  // Initial load
+  window.addEventListener('DOMContentLoaded', () => {
+    fetchLogs();
+  });
+</script>
+<script src="public/js/common.js"></script>
+
+</body>
+</html>

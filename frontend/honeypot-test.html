@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Honeypot Test Environment</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #eef2ff, #f8fafc);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .test-container {
+      background: #ffffff;
+      width: 420px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #eef2ff;
+      color: #4338ca;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      margin: 10px 0;
+      color: #111827;
+    }
+
+    p {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .info {
+      margin-top: 15px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .warning {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #b91c1c;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="test-container">
+
+  <span class="badge">Security Test Mode</span>
+
+  <h2>Honeypot Test Login</h2>
+
+  <p>
+    This page simulates an attack scenario.  
+    Multiple rapid login attempts will trigger the honeypot.
+  </p>
+
+  <form id="testForm">
+    <input type="text" placeholder="Username" required>
+    <input type="password" placeholder="Password" required>
+    <button type="submit">Attempt Login</button>
+  </form>
+
+  <div class="info">
+    Trigger condition: <b>3 login attempts within 3 seconds</b>
+  </div>
+
+  <div class="warning">
+    This test does not affect real users or production data.
+  </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  let attempts = 0;
+  let lastTime = Date.now();
+
+  const form = document.getElementById("testForm");
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const now = Date.now();
+    attempts = (now - lastTime < 3000) ? attempts + 1 : 1;
+    lastTime = now;
+
+    console.log("ATTEMPTS:", attempts);
+
+    if (attempts >= 3) {
+
+      fetch("http://localhost:3000/api/logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ip: "INTERNAL_TEST",
+          type: "HONEYPOT",
+          message: "Honeypot triggered via internal test environment"
+        })
+      })
+      .then(res => res.json())
+      .then(() => {
+        window.location.href = "dummy.html";
+      })
+      .catch(err => console.error("Log error:", err));
+    }
+  });
+
+});
+</script>
+<script src="public/js/common.js"></script>
+
+</body>
+</html>

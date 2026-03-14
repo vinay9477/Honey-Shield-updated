@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bot Filtering Test</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #fed7aa, #fef3c7);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .test-container {
+      background: #ffffff;
+      width: 420px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #fdba74;
+      color: #92400e;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      margin: 10px 0;
+      color: #111827;
+    }
+
+    p {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    input[type="hidden"] {
+      display: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      background: #ea580c;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #c2410c;
+    }
+
+    .info {
+      margin-top: 15px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .warning {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #b91c1c;
+    }
+
+    .interaction-counter {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #374151;
+      padding: 10px;
+      background: #f3f4f6;
+      border-radius: 6px;
+    }
+
+    .bot-detected {
+      color: #b91c1c;
+      background: #fee2e2;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .human-verified {
+      color: #166534;
+      background: #dcfce7;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .hidden-field-group {
+      margin: 15px 0;
+      padding: 10px;
+      background: #f9fafb;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="test-container">
+
+  <span class="badge">Bot Test</span>
+
+  <h2>🤖 Bot Filtering Test</h2>
+
+  <p>
+    This page tests bot detection using honeypot fields.
+    Bots typically interact with hidden fields - try to make them visible and interact with them.
+  </p>
+
+  <form id="testForm">
+    <!-- Visible fields -->
+    <input type="text" name="username" placeholder="Username" required>
+    <input type="email" name="email" placeholder="Email" required>
+
+    <!-- Hidden honeypot fields (bots usually fill these) -->
+    <input type="text" id="honeypot_phone" name="phone" style="display: none;">
+    <input type="text" id="honeypot_website" name="website" style="display: none;">
+
+    <button type="submit">Submit Form</button>
+  </form>
+
+  <div class="interaction-counter">
+    Honeypot interactions: <span id="honeypotInteractions">0</span>
+  </div>
+
+  <div class="hidden-field-group">
+    Hidden fields present to detect automated form filling
+  </div>
+
+  <div id="result"></div>
+
+  <div class="warning">
+    This test does not affect real users or production data.
+  </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  // Get userId from localStorage
+  function getUserId() {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user._id || user.id || user.email || "ANONYMOUS";
+  }
+
+  const form = document.getElementById("testForm");
+  const resultDiv = document.getElementById("result");
+  const honeypotInteractionSpan = document.getElementById("honeypotInteractions");
+
+  let honeypotInteractions = 0;
+  let isBotDetected = false;
+
+  // Track interactions with hidden fields
+  const honeypotFields = ['honeypot_phone', 'honeypot_website'];
+
+  honeypotFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) {
+      field.addEventListener('focus', trackBotActivity);
+      field.addEventListener('click', trackBotActivity);
+      field.addEventListener('change', trackBotActivity);
+      field.addEventListener('input', trackBotActivity);
+    }
+  });
+
+  function trackBotActivity() {
+    honeypotInteractions++;
+    honeypotInteractionSpan.textContent = honeypotInteractions;
+    isBotDetected = true;
+    document.querySelector('.interaction-counter').style.background = '#fee2e2';
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    // Check if honeypot fields have values
+    const honeypot_phone = document.getElementById('honeypot_phone').value;
+    const honeypot_website = document.getElementById('honeypot_website').value;
+
+    if (isBotDetected || honeypot_phone || honeypot_website || honeypotInteractions > 0) {
+      resultDiv.className = "bot-detected";
+      resultDiv.innerHTML = "<b>✗ Bot Detected!</b><br>Automated form submission detected. Request blocked.";
+
+      fetch("http://localhost:3000/api/logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: getUserId(),
+          ip: "INTERNAL_TEST",
+          type: "BOT_DETECTED",
+          message: "Bot activity detected - honeypot interaction: " + honeypotInteractions
+        })
+      })
+      .catch(err => console.error("Log error:", err));
+
+    } else {
+      resultDiv.className = "human-verified";
+      resultDiv.innerHTML = "<b>✓ Human Verified</b><br>Form passed bot detection. Request accepted.";
+    }
+  });
+
+});
+</script>
+<script src="public/js/common.js"></script>
+
+</body>
+</html>

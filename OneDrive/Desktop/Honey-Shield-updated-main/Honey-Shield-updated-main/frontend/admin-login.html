@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | HoneyShield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #06030f;
+      --surface: rgba(12, 8, 24, 0.96);
+      --red: #ff2a4a;
+      --red-dim: rgba(255,42,74,0.15);
+      --red-glow: rgba(255,42,74,0.3);
+      --violet: #8b23e8;
+      --amber: #ffb830;
+      --text: #f0eafa;
+      --muted: rgba(240,234,250,0.4);
+      --dim: rgba(240,234,250,0.18);
+      --border: rgba(255,42,74,0.12);
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ─── ANIMATED BG ─── */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,42,74,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,42,74,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+    }
+    .bg-glow-1 {
+      position: fixed; width: 700px; height: 700px; top: -200px; left: -200px;
+      background: radial-gradient(circle, rgba(139,35,232,0.12) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+      animation: glowDrift 14s ease-in-out infinite alternate;
+    }
+    .bg-glow-2 {
+      position: fixed; width: 600px; height: 600px; bottom: -200px; right: -100px;
+      background: radial-gradient(circle, rgba(255,42,74,0.1) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+      animation: glowDrift 10s ease-in-out infinite alternate-reverse;
+    }
+    @keyframes glowDrift { from{transform:translate(0,0)} to{transform:translate(40px,30px)} }
+
+    /* ─── SCANLINES ─── */
+    .scanlines {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.03;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.8) 0px, rgba(0,0,0,0.8) 1px, transparent 1px, transparent 4px);
+    }
+
+    /* ─── DANGER STRIPE (top) ─── */
+    .danger-stripe {
+      position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 10;
+      background: repeating-linear-gradient(90deg,
+        var(--red) 0px, var(--red) 20px,
+        #000 20px, #000 30px);
+      animation: stripeScroll 1.2s linear infinite;
+    }
+    @keyframes stripeScroll { from{background-position:0 0} to{background-position:30px 0} }
+
+    /* ─── CARD ─── */
+    .card {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 420px; margin: 20px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px rgba(255,42,74,0.06), 0 40px 90px rgba(0,0,0,0.7), 0 0 60px rgba(255,42,74,0.05);
+      animation: cardIn 0.6s cubic-bezier(.16,1,.3,1) both;
+      clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(20px) scale(0.98)} to{opacity:1;transform:none} }
+
+    /* corner cut decorator */
+    .card-corner {
+      position: absolute; top: 0; right: 0; width: 16px; height: 16px;
+      background: var(--red); clip-path: polygon(100% 0, 0 0, 100% 100%);
+    }
+
+    /* ─── HEADER ─── */
+    .card-head {
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 16px;
+    }
+    .head-icon-wrap {
+      width: 48px; height: 48px; flex-shrink: 0;
+      background: var(--red-dim);
+      border: 1px solid rgba(255,42,74,0.3);
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      animation: iconPulse 3s ease-in-out infinite;
+    }
+    @keyframes iconPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(255,42,74,0.3); }
+      50% { box-shadow: 0 0 0 8px rgba(255,42,74,0); }
+    }
+    .head-icon-wrap svg { width: 24px; height: 24px; }
+    .head-text { flex: 1; }
+    .head-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--red); margin-bottom: 5px; display: flex; align-items: center; gap: 6px;
+    }
+    .head-eyebrow::before {
+      content: ''; width: 16px; height: 1px; background: var(--red);
+    }
+    .head-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 26px; font-weight: 700; line-height: 1;
+      letter-spacing: 1px;
+      background: linear-gradient(120deg, var(--text) 40%, var(--red) 100%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .head-subtitle {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; color: var(--dim); letter-spacing: 1px; margin-top: 4px;
+    }
+
+    /* ─── BODY ─── */
+    .card-body { padding: 24px 28px; display: flex; flex-direction: column; gap: 16px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px; letter-spacing: 2.5px; color: var(--muted); text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .field label::before { content: '//'; color: var(--red); }
+
+    .input-wrap { position: relative; }
+    .field input {
+      width: 100%;
+      background: rgba(255,42,74,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 3px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace; font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .field input:focus {
+      border-color: rgba(255,42,74,0.5);
+      box-shadow: 0 0 0 3px rgba(255,42,74,0.07), inset 0 1px 3px rgba(0,0,0,0.3);
+      background: rgba(255,42,74,0.06);
+    }
+    .field input::placeholder { color: var(--dim); }
+    .pw-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;
+      color: var(--muted); background: none; border: none; cursor: pointer;
+      transition: color 0.2s;
+    }
+    .pw-toggle:hover { color: var(--red); }
+
+    /* ─── WARN BOX ─── */
+    .warn-box {
+      display: flex; gap: 12px; align-items: flex-start;
+      background: rgba(255,184,48,0.05);
+      border: 1px solid rgba(255,184,48,0.15);
+      border-left: 3px solid var(--amber);
+      border-radius: 3px;
+      padding: 12px 14px;
+    }
+    .warn-box-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .warn-box-text {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; letter-spacing: 0.4px; color: rgba(255,184,48,0.65);
+      line-height: 1.7;
+    }
+    .warn-box-text strong { color: var(--amber); font-weight: 500; }
+
+    /* ─── STATUS MSG ─── */
+    .status-msg {
+      font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px;
+      padding: 11px 14px; border-radius: 3px; display: none; text-align: center;
+    }
+    .status-msg.error {
+      background: rgba(255,42,74,0.08); color: var(--red);
+      border: 1px solid rgba(255,42,74,0.2); display: block;
+    }
+    .status-msg.success {
+      background: rgba(0,245,150,0.08); color: #00f596;
+      border: 1px solid rgba(0,245,150,0.2); display: block;
+    }
+
+    /* ─── BUTTON ─── */
+    .btn-auth {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--red), #c41e38);
+      border: none; border-radius: 3px;
+      color: white;
+      font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 3px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(255,42,74,0.3);
+      position: relative; overflow: hidden;
+    }
+    .btn-auth::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.08));
+      pointer-events: none;
+    }
+    .btn-auth:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255,42,74,0.45); }
+    .btn-auth:active { transform: translateY(0); }
+    .btn-auth:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    /* ─── FOOTER ─── */
+    .card-foot {
+      padding: 14px 28px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-foot a {
+      font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px;
+      color: var(--dim); text-decoration: none; transition: color 0.2s;
+    }
+    .card-foot a:hover { color: var(--text); }
+    .restricted-badge {
+      font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px;
+      color: var(--red); padding: 4px 10px;
+      background: var(--red-dim); border: 1px solid rgba(255,42,74,0.25);
+      border-radius: 2px;
+    }
+
+    /* ─── LOCK OVERLAY ─── */
+    .lock-overlay {
+      position: absolute; inset: 0; z-index: 20; border-radius: 4px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+      background: rgba(6,3,15,0.95); backdrop-filter: blur(10px);
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .lock-overlay.show { opacity: 1; pointer-events: all; }
+    .lock-icon { font-size: 52px; animation: lockPop 0.4s cubic-bezier(.16,1,.3,1) both; }
+    @keyframes lockPop { from{transform:scale(0.4)} to{transform:scale(1)} }
+    .lock-label {
+      font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700;
+      letter-spacing: 3px; text-align: center;
+    }
+    .lock-sub {
+      font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1.5px;
+      text-align: center; color: var(--muted);
+    }
+    @keyframes shake {
+      0%,100%{transform:translateX(0)}
+      20%{transform:translateX(-10px)}
+      40%{transform:translateX(10px)}
+      60%{transform:translateX(-7px)}
+      80%{transform:translateX(7px)}
+    }
+    .shake { animation: shake 0.4s ease; }
+  </style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow-1"></div>
+<div class="bg-glow-2"></div>
+<div class="scanlines"></div>
+<div class="danger-stripe"></div>
+
+<div class="card" id="card">
+  <div class="card-corner"></div>
+
+  <!-- Lock overlay -->
+  <div class="lock-overlay" id="lockOverlay">
+    <div class="lock-icon" id="lockIcon">🔒</div>
+    <div class="lock-label" id="lockLabel" style="color:var(--text)">AUTHENTICATING</div>
+    <div class="lock-sub" id="lockSub">Verifying credentials...</div>
+  </div>
+
+  <!-- Header -->
+  <div class="card-head">
+    <div class="head-icon-wrap">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L4 6V12C4 16.4 7.6 20.5 12 22C16.4 20.5 20 16.4 20 12V6L12 2Z"
+              stroke="#ff2a4a" stroke-width="1.5" fill="rgba(255,42,74,0.1)"/>
+        <path d="M9 12L11 14L15 10" stroke="#ff2a4a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="12" cy="12" r="1.5" fill="#ff2a4a" opacity="0.6"/>
+      </svg>
+    </div>
+    <div class="head-text">
+      <div class="head-eyebrow">ADMIN ACCESS</div>
+      <div class="head-title">CONTROL CENTER</div>
+      <div class="head-subtitle">HoneyShield v2.0 — Restricted Zone</div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="card-body">
+    <div class="field">
+      <label>Admin Username</label>
+      <div class="input-wrap">
+        <input type="text" id="username" placeholder="Enter username" autocomplete="off"
+               onkeydown="if(event.key==='Enter')document.getElementById('password').focus()">
+      </div>
+    </div>
+    <div class="field">
+      <label>Access Key</label>
+      <div class="input-wrap">
+        <input type="password" id="password" placeholder="Enter password"
+               onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:56px">
+        <button class="pw-toggle" type="button" onclick="togglePw()">SHOW</button>
+      </div>
+    </div>
+
+    <div class="warn-box">
+      <div class="warn-box-icon">⚠</div>
+      <div class="warn-box-text">
+        Restricted access. All login attempts are <strong>logged and monitored</strong>.
+        Unauthorized access is a <strong>criminal offence</strong>.
+      </div>
+    </div>
+
+    <div class="status-msg" id="statusMsg"></div>
+    <button class="btn-auth" id="loginBtn" onclick="doLogin()">AUTHENTICATE</button>
+  </div>
+
+  <!-- Footer -->
+  <div class="card-foot">
+    <a href="login.html">← Operator Login</a>
+    <div class="restricted-badge">ADMIN ZONE</div>
+  </div>
+</div>
+
+<script>
+function togglePw(){
+  const inp=document.getElementById('password'),btn=document.querySelector('.pw-toggle');
+  inp.type=inp.type==='password'?'text':'password';
+  btn.textContent=inp.type==='password'?'SHOW':'HIDE';
+}
+
+function setStatus(msg,type){
+  const el=document.getElementById('statusMsg');
+  el.textContent=msg; el.className='status-msg '+type;
+}
+
+function showLock(success){
+  const ov=document.getElementById('lockOverlay');
+  const icon=document.getElementById('lockIcon');
+  const lbl=document.getElementById('lockLabel');
+  const sub=document.getElementById('lockSub');
+  ov.classList.add('show');
+  if(success){
+    icon.textContent='🔓'; lbl.style.color='#00f596'; lbl.textContent='ACCESS GRANTED';
+    sub.style.color='#00f596'; sub.textContent='Redirecting to control center...';
+  } else {
+    icon.textContent='⛔'; lbl.style.color='var(--red)'; lbl.textContent='ACCESS DENIED';
+    sub.style.color='var(--red)'; sub.textContent='Invalid credentials';
+    document.getElementById('card').classList.add('shake');
+    setTimeout(()=>{
+      document.getElementById('card').classList.remove('shake');
+      ov.classList.remove('show');
+      icon.textContent='🔒'; lbl.style.color='var(--text)'; lbl.textContent='AUTHENTICATING';
+      sub.style.color='var(--muted)'; sub.textContent='Verifying credentials...';
+    },1800);
+  }
+}
+
+async function doLogin(){
+  const username=document.getElementById('username').value.trim();
+  const password=document.getElementById('password').value;
+  if(!username||!password){setStatus('⚠ All fields required','error');return;}
+
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true; btn.textContent='VERIFYING...';
+  document.getElementById('statusMsg').className='status-msg';
+
+  try{
+    const res=await fetch('http://localhost:3000/api/admin/login',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username,password}),
+      signal:AbortSignal.timeout(4000)
+    });
+    const data=await res.json();
+    if(res.ok){
+      localStorage.setItem('admin',JSON.stringify({username}));
+      showLock(true);
+      setTimeout(()=>window.location.href='admin-dashboard.html',1600);
+    } else {
+      showLock(false);
+      setStatus('✗ '+(data.message||'Invalid credentials'),'error');
+      btn.disabled=false; btn.textContent='AUTHENTICATE';
+    }
+  }catch(e){
+    // Offline fallback for dev — hardcoded admin/admin
+    if(username==='admin'&&password==='admin'){
+      localStorage.setItem('admin',JSON.stringify({username}));
+      showLock(true);
+      setTimeout(()=>window.location.href='admin-dashboard.html',1600);
+    } else {
+      showLock(false);
+      setStatus('⚠ Server unreachable — check backend','error');
+      btn.disabled=false; btn.textContent='AUTHENTICATE';
+    }
+  }
+}
+</script>
+</body>
+</html>

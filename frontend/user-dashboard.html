@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Honey Shield - Security Intelligence</title>
+  <link rel="stylesheet" href="public/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>Honey Shield</h2>
+    <ul>
+      <li class="active" onclick="navigateTo('user-dashboard.html')">🏠 Dashboard</li>
+      <li onclick="navigateTo('services.html')">⚙️ Services</li>
+      <li onclick="navigateTo('activity-logs.html')">📋 Activity Logs</li>
+      <li onclick="navigateTo('settings.html')">⚙️ Settings</li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <h3>🛡️ Security Dashboard</h3>
+      <button onclick="logout()">Logout</button>
+    </header>
+
+    <!-- User Info Stats -->
+    <section class="stats">
+      <div class="stat-card hover-card user-card">
+        <h4>Account</h4>
+        <p class="stat-number email-text" id="accountEmails">
+          Loading...
+        </p>
+        <span class="stat-desc">Login credentials</span>
+      </div>
+
+      <div class="stat-card hover-card org-card">
+        <h4>Organization</h4>
+        <p class="stat-number" id="userOrg">—</p>
+        <span class="stat-desc">Workspace identity</span>
+      </div>
+
+      <div class="stat-card hover-card service-active">
+        <h4>Active Service</h4>
+        <p class="stat-number" id="activeService">None</p>
+        <span class="service-badge" id="serviceBadge">Inactive</span>
+      </div>
+
+      <div class="stat-card green">
+        <h4>Status</h4>
+        <p>● Active</p>
+        <span class="stat-desc">System running</span>
+      </div>
+    </section>
+
+    <!-- Security Metrics Grid -->
+    <section class="stats-grid">
+      <div class="stat-card hover-card" id="loginCard" style="cursor: pointer;">
+        <h4>Login Attempts</h4>
+        <p class="stat-number" id="loginCount">0</p>
+        <span class="stat-desc">Total authentication attempts</span>
+      </div>
+
+      <div class="stat-card hover-card danger" id="blockedCard" style="cursor: pointer;">
+        <h4>Blocked Attempts</h4>
+        <p class="stat-number" id="blockedCount">0</p>
+        <span class="stat-desc">Honeypot triggered events</span>
+      </div>
+
+      <div class="stat-card hover-card" id="successCard">
+        <h4>Success Rate</h4>
+        <p class="stat-number" id="successRate">0%</p>
+        <span class="stat-desc">Authentication success</span>
+      </div>
+    </section>
+
+    <!-- Charts Section -->
+    <div class="charts">
+      <!-- Login Attempts Chart -->
+      <div class="chart-box">
+        <h3>📊 Authentication Trends</h3>
+        <div class="chart-container">
+          <canvas id="authChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Attack Types Chart -->
+      <div class="chart-box">
+        <h3>🎯 Attack Distribution</h3>
+        <div class="chart-container">
+          <canvas id="attackChart" style="height: 250px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Cyber Attacks Widget -->
+    <section class="live-attacks">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 style="margin: 0;">
+          <span class="live-pulse"></span>
+          Live Cyber Attacks (Simulated)
+        </h3>
+        <button onclick="refreshAttacks()" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(37, 99, 235, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+          🔄 Refresh
+        </button>
+      </div>
+      <div id="attacksList"></div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // Smooth navigation function
+  function navigateTo(page) {
+    document.querySelector('.main').style.opacity = '0';
+    setTimeout(() => {
+      window.location.href = page;
+    }, 200);
+  }
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+
+  // Initialize charts
+  const authCtx = document.getElementById('authChart');
+  const attacksCtx = document.getElementById('attackChart');
+
+  if (authCtx) {
+    new Chart(authCtx, {
+      type: 'line',
+      data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [
+          {
+            label: 'Successful Logins',
+            data: [12, 19, 8, 15, 22, 10, 14],
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#10b981',
+            pointHoverRadius: 6
+          },
+          {
+            label: 'Failed Attempts',
+            data: [3, 5, 2, 6, 4, 3, 5],
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#ef4444',
+            pointHoverRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: '#94a3b8',
+              font: { size: 12, weight: 600 }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#94a3b8' }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: '#94a3b8' }
+          }
+        }
+      }
+    });
+  }
+
+  if (attacksCtx) {
+    new Chart(attacksCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Brute Force', 'SQL Injection', 'XSS', 'Credential Stuffing', 'Other'],
+        datasets: [{
+          data: [35, 20, 18, 15, 12],
+          backgroundColor: [
+            '#ef4444',
+            '#f97316',
+            '#eab308',
+            '#3b82f6',
+            '#8b5cf6'
+          ],
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: '#94a3b8',
+              font: { size: 12, weight: 600 },
+              padding: 15
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Load user data
+  document.addEventListener("DOMContentLoaded", () => {
+    const userData = localStorage.getItem("user");
+    if (!userData) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const user = JSON.parse(userData);
+
+    // Display the email that user logged in with
+    const emailElement = document.getElementById("accountEmails");
+    if (emailElement && user.email) {
+      emailElement.innerText = user.email;
+    }
+
+    // Organization
+    const orgEl = document.getElementById("userOrg");
+    if (orgEl) {
+      orgEl.innerText = user.organization || "Not set";
+    }
+
+    // Active service
+    if (user.service) {
+      document.getElementById("activeService").innerText =
+        user.service.charAt(0).toUpperCase() + user.service.slice(1);
+
+      const badge = document.getElementById("serviceBadge");
+      badge.innerText = "Active";
+      badge.classList.add("active");
+
+      document.querySelector(".service-active").classList.add("active");
+    }
+
+    // Fetch and display logs
+    fetch(`http://localhost:3000/api/logs?userId=${user._id || user.id}`)
+      .then(res => res.json())
+      .then(logs => {
+        const userId = user._id || user.id;
+        const userLogs = (logs || []).filter(
+          log => !log.userId || log.userId === userId || log.user === userId || log.email === user.email
+        );
+
+        const loginAttempts = userLogs.filter(
+          log => log.type === "AUTH"
+        ).length;
+
+        const blockedAttempts = userLogs.filter(
+          log => log.type === "HONEYPOT"
+        ).length;
+
+        document.getElementById("loginCount").innerText = loginAttempts;
+        document.getElementById("blockedCount").innerText = blockedAttempts;
+
+        const successRate = loginAttempts > 0
+          ? Math.round(((loginAttempts - blockedAttempts) / loginAttempts) * 100)
+          : 0;
+        document.getElementById("successRate").innerText = successRate + "%";
+      })
+      .catch(err => {
+        console.error("Dashboard log error:", err);
+      });
+  });
+
+  // Click handlers for cards
+  document.getElementById("loginCard").onclick = () => {
+    navigateTo("activity-logs.html");
+  };
+
+  document.getElementById("blockedCard").onclick = () => {
+    navigateTo("activity-logs.html");
+  };
+
+  // Attack types with severity levels
+  const attackTypes = [
+    { name: 'BRUTE_FORCE', severity: 'critical', icon: '🔪' },
+    { name: 'SQL_INJECTION', severity: 'critical', icon: '💉' },
+    { name: 'XSS_ATTEMPT', severity: 'high', icon: '🎯' },
+    { name: 'CREDENTIAL_STUFFING', severity: 'high', icon: '🗝️' },
+    { name: 'DDoS_ATTEMPT', severity: 'critical', icon: '🌊' },
+    { name: 'HONEYPOT_HIT', severity: 'medium', icon: '🍯' },
+    { name: 'PHISHING', severity: 'high', icon: '🎣' },
+    { name: 'PORT_SCAN', severity: 'medium', icon: '🔍' }
+  ];
+
+  const ips = [
+    '192.168.1.45', '10.0.0.78', '172.16.0.33', '203.0.113.99', '198.51.100.55',
+    '8.8.8.8', '1.1.1.1', '185.220.101.45', '104.21.45.67', '216.58.194.174'
+  ];
+
+  // Generate random IP
+  function randomIP() {
+    return ips[Math.floor(Math.random() * ips.length)];
+  }
+
+  // Generate random attack
+  function generateRandomAttack() {
+    const attackType = attackTypes[Math.floor(Math.random() * attackTypes.length)];
+    const minAgo = Math.floor(Math.random() * 20);
+    const timeStr = minAgo === 0 ? 'Just now' : `${minAgo} min${minAgo > 1 ? 's' : ''} ago`;
+
+    return {
+      source: randomIP(),
+      type: attackType.name,
+      severity: attackType.severity,
+      icon: attackType.icon,
+      time: timeStr
+    };
+  }
+
+  // Generate multiple attacks
+  function generateAttacks() {
+    const attacks = [];
+    const count = 5 + Math.floor(Math.random() * 4); // 5-8 attacks
+    for (let i = 0; i < count; i++) {
+      attacks.push(generateRandomAttack());
+    }
+    return attacks;
+  }
+
+  // Get color based on severity
+  function getSeverityColor(severity) {
+    switch (severity) {
+      case 'critical': return '#ef4444'; // Red
+      case 'high': return '#f97316'; // Orange
+      case 'medium': return '#eab308'; // Yellow
+      default: return '#64748b'; // Gray
+    }
+  }
+
+  // Render attacks to DOM
+  function renderAttacks(attacks) {
+    const container = document.getElementById('attacksList');
+    container.innerHTML = '';
+
+    attacks.forEach((attack, index) => {
+      const severityColor = getSeverityColor(attack.severity);
+      const div = document.createElement('div');
+      div.className = 'attack-item';
+      div.style.animation = `slideIn 0.4s ease-out ${index * 0.05}s backwards`;
+
+      div.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+          <span style="font-size: 20px; opacity: 0.8;">${attack.icon}</span>
+          <div style="flex: 1;">
+            <span style="display: block; color: #e2e8f0; font-weight: 600; margin-bottom: 2px;">${attack.type}</span>
+            <span style="display: block; color: ${severityColor}; font-size: 13px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">${attack.severity}</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+          <span style="font-family: 'Courier New', monospace; color: #fbbf24; font-weight: 600; font-size: 13px;">${attack.source}</span>
+          <span style="color: #94a3b8; font-size: 12px;">🌍 ${attack.time}</span>
+        </div>
+      `;
+
+      container.appendChild(div);
+    });
+  }
+
+  // Refresh attacks
+  function refreshAttacks() {
+    const attacks = generateAttacks();
+    renderAttacks(attacks);
+  }
+
+  // Add animation for sliding in
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Initial render on page load
+  window.addEventListener('load', () => {
+    refreshAttacks();
+  });
+</script>
+<script src="public/js/common.js"></script>
+
+</body>
+</html>

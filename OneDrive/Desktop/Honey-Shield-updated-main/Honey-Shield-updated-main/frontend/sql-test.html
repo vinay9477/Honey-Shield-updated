@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SQL Injection Test</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #fecaca, #fee2e2);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .test-container {
+      background: #ffffff;
+      width: 420px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #fca5a5;
+      color: #7f1d1d;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      margin: 10px 0;
+      color: #111827;
+    }
+
+    p {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      background: #dc2626;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #b91c1c;
+    }
+
+    .info {
+      margin-top: 15px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .warning {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #b91c1c;
+    }
+
+    .examples {
+      margin-top: 15px;
+      font-size: 11px;
+      color: #6b7280;
+      background: #f9fafb;
+      padding: 10px;
+      border-radius: 6px;
+      border-left: 3px solid #dc2626;
+    }
+
+    .injection-detected {
+      color: #b91c1c;
+      background: #fee2e2;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .safe-input {
+      color: #166534;
+      background: #dcfce7;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="test-container">
+
+  <span class="badge">SQL Injection Test</span>
+
+  <h2>🛡️ SQL Injection Prevention Test</h2>
+
+  <p>
+    This page tests SQL injection attack detection.
+    Try entering SQL payloads like: <code>' OR 1=1--</code> or <code>admin'--</code>
+  </p>
+
+  <form id="testForm">
+    <input type="text" id="username" name="username" placeholder="Username" required>
+    <input type="password" id="password" name="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+  </form>
+
+  <div class="info">
+    Blocked patterns: <code>'</code>, <code>--</code>, <code>;</code>, <code>OR</code>, <code>AND</code>, <code>DROP</code>, <code>UNION</code>
+  </div>
+
+  <div id="result"></div>
+
+  <div class="examples">
+    <b>Try these payloads:</b><br>
+    • <code>' OR '1'='1</code><br>
+    • <code>admin'--</code><br>
+    • <code>' OR 1=1--</code><br>
+    • <code>'; DROP TABLE--</code>
+  </div>
+
+  <div class="warning">
+    This test does not affect real users or production data.
+  </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  // Get userId from localStorage
+  function getUserId() {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user._id || user.id || user.email || "ANONYMOUS";
+  }
+
+  const form = document.getElementById("testForm");
+  const resultDiv = document.getElementById("result");
+
+  function isSQLInjection(input) {
+    // Detect common SQL injection patterns
+    const sqlPatterns = /('|--|;|\b(OR|AND|UNION|DROP|SELECT|INSERT|DELETE|UPDATE|EXEC|EXECUTE|SCRIPT)\b)/i;
+    return sqlPatterns.test(input);
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    // Check both fields
+    if (isSQLInjection(username) || isSQLInjection(password)) {
+      resultDiv.className = "injection-detected";
+      resultDiv.innerHTML = "<b>✗ SQL Injection Detected!</b><br>Malicious SQL pattern detected and blocked.";
+
+      fetch("http://localhost:3000/api/logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: getUserId(),
+          ip: "INTERNAL_TEST",
+          type: "SQL_INJECTION",
+          message: "SQL injection attempt detected: " + (isSQLInjection(username) ? username : password)
+        })
+      })
+      .catch(err => console.error("Log error:", err));
+
+    } else {
+      resultDiv.className = "safe-input";
+      resultDiv.innerHTML = "<b>✓ Safe Input</b><br>No SQL injection patterns detected. Login processed.";
+    }
+  });
+
+});
+</script>
+<script src="public/js/common.js"></script>
+
+</body>
+</html>

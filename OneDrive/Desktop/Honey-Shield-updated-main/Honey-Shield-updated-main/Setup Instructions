@@ -1,0 +1,10 @@
+# Clone repo
+git clone https://github.com/vinay9477/Honey-Shield-updated
+
+# Backend
+cd backend
+npm install
+node server.js
+
+# Frontend
+open index.html

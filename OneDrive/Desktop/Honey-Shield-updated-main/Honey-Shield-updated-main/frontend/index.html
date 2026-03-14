@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HoneyShield — Security Intelligence Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:     #03010a;
+      --cyan:   #00f5ff;
+      --violet: #7c3aed;
+      --pink:   #f000ff;
+      --text:   #e2e8f0;
+      --muted:  rgba(226,232,240,0.45);
+      --card:   rgba(13,11,22,0.85);
+      --border: rgba(255,255,255,0.07);
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+
+    /* MATRIX */
+    #matrix { position:fixed; inset:0; z-index:0; opacity:0.06; pointer-events:none; }
+
+    /* GLOWS */
+    .glow { position:fixed; border-radius:50%; filter:blur(120px); pointer-events:none; z-index:0; animation:drift 12s ease-in-out infinite alternate; }
+    .glow-1 { width:600px; height:600px; background:rgba(124,58,237,0.14); top:-150px; right:-150px; animation-delay:0s; }
+    .glow-2 { width:500px; height:500px; background:rgba(0,245,255,0.09); bottom:-150px; left:-150px; animation-delay:-6s; }
+    @keyframes drift { from{transform:translate(0,0)} to{transform:translate(30px,30px)} }
+
+    /* GRID OVERLAY */
+    .grid-overlay {
+      position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image:
+        linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* WRAPPER */
+    .wrapper {
+      position:relative; z-index:1;
+      display:flex; flex-direction:column;
+      align-items:center; gap:48px;
+      padding:40px 20px; width:100%; max-width:600px;
+      animation:fadeUp 0.7s cubic-bezier(.16,1,.3,1) both;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(32px)} to{opacity:1;transform:translateY(0)} }
+
+    /* LOGO AREA */
+    .logo-area { display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center; }
+    .shield-wrap {
+      width:80px; height:80px;
+      background:rgba(0,245,255,0.06);
+      border:1px solid rgba(0,245,255,0.2);
+      border-radius:20px; display:flex; align-items:center; justify-content:center;
+      position:relative; animation:shieldFloat 3s ease-in-out infinite;
+    }
+    @keyframes shieldFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    .shield-wrap::before {
+      content:''; position:absolute; inset:-1px; border-radius:20px;
+      background:linear-gradient(135deg,rgba(0,245,255,0.3),rgba(124,58,237,0.3),transparent);
+      z-index:-1; animation:borderSpin 4s linear infinite;
+    }
+    @keyframes borderSpin { from{filter:hue-rotate(0deg)} to{filter:hue-rotate(360deg)} }
+
+    .eyebrow {
+      font-family:'JetBrains Mono',monospace; font-size:11px;
+      letter-spacing:4px; color:var(--cyan); text-transform:uppercase;
+    }
+    .brand-title {
+      font-family:'Syne',sans-serif; font-size:48px; font-weight:800; line-height:1;
+      background:linear-gradient(135deg,var(--cyan) 0%,var(--violet) 60%,var(--pink) 100%);
+      -webkit-background-clip:text;background-clip:text; -webkit-text-fill-color:transparent;
+      background-size:200%; animation:titleShift 5s ease-in-out infinite alternate;
+    }
+    @keyframes titleShift { from{background-position:0%} to{background-position:100%} }
+    .brand-sub {
+      font-size:14px; color:var(--muted); letter-spacing:0.5px; max-width:360px; line-height:1.6;
+    }
+
+    /* STATS ROW */
+    .stats-row {
+      display:flex; gap:24px; width:100%; justify-content:center;
+      animation:fadeUp 0.7s 0.15s cubic-bezier(.16,1,.3,1) both;
+    }
+    .stat {
+      flex:1; max-width:140px;
+      background:var(--card); border:1px solid var(--border);
+      border-radius:12px; padding:14px 16px; text-align:center;
+    }
+    .stat-num {
+      font-family:'Syne',sans-serif; font-size:22px; font-weight:800;
+      background:linear-gradient(90deg,var(--cyan),var(--violet));
+      -webkit-background-clip:text;background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .stat-lbl { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; margin-top:4px; }
+
+    /* ACTION CARDS */
+    .cards {
+      display:flex; flex-direction:column; gap:12px; width:100%;
+      animation:fadeUp 0.7s 0.25s cubic-bezier(.16,1,.3,1) both;
+    }
+    .action-card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:16px; padding:20px 24px;
+      display:flex; align-items:center; gap:18px;
+      cursor:pointer; text-decoration:none; color:inherit;
+      transition:all 0.25s; position:relative; overflow:hidden;
+    }
+    .action-card::before {
+      content:''; position:absolute; top:0; left:0; bottom:0; width:3px;
+      border-radius:3px 0 0 3px; transition:opacity 0.25s; opacity:0;
+    }
+    .action-card:hover { transform:translateX(6px); border-color:rgba(255,255,255,0.14); }
+    .action-card:hover::before { opacity:1; }
+
+    .action-card.register::before { background:linear-gradient(180deg,var(--cyan),var(--violet)); }
+    .action-card.login::before    { background:linear-gradient(180deg,var(--violet),var(--pink)); }
+    .action-card.admin::before    { background:linear-gradient(180deg,#ef4444,#dc2626); }
+
+    .action-card:hover.register { box-shadow:0 8px 32px rgba(0,245,255,0.08); }
+    .action-card:hover.login    { box-shadow:0 8px 32px rgba(124,58,237,0.12); }
+    .action-card:hover.admin    { box-shadow:0 8px 32px rgba(239,68,68,0.1); }
+
+    .card-icon {
+      width:44px; height:44px; border-radius:12px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; font-size:20px;
+    }
+    .register .card-icon { background:rgba(0,245,255,0.1); }
+    .login    .card-icon { background:rgba(124,58,237,0.12); }
+    .admin    .card-icon { background:rgba(239,68,68,0.1); }
+
+    .card-text { flex:1; }
+    .card-title {
+      font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-bottom:3px;
+    }
+    .register .card-title { color:var(--cyan); }
+    .login    .card-title { color:#a78bfa; }
+    .admin    .card-title { color:#f87171; }
+    .card-desc { font-size:12px; color:var(--muted); }
+
+    .card-arrow {
+      font-family:'JetBrains Mono',monospace; font-size:18px; color:var(--muted);
+      transition:transform 0.2s, color 0.2s;
+    }
+    .action-card:hover .card-arrow { transform:translateX(4px); color:var(--text); }
+
+    /* FOOTER */
+    .footer {
+      font-family:'JetBrains Mono',monospace; font-size:10px;
+      letter-spacing:2px; color:rgba(226,232,240,0.2); text-align:center;
+      animation:fadeUp 0.7s 0.35s cubic-bezier(.16,1,.3,1) both;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+<div class="grid-overlay"></div>
+
+<div class="wrapper">
+
+  <!-- LOGO -->
+  <div class="logo-area">
+    <div class="shield-wrap">
+      <svg width="40" height="40" viewBox="0 0 44 44" fill="none">
+        <path d="M22 3L5 10V22C5 30.5 12.5 38 22 41C31.5 38 39 30.5 39 22V10L22 3Z"
+              stroke="url(#sg)" stroke-width="1.5" fill="rgba(0,245,255,0.05)"/>
+        <path d="M15 22L19.5 26.5L29 17" stroke="url(#sg)" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <defs>
+          <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00f5ff"/>
+            <stop offset="100%" stop-color="#7c3aed"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div class="eyebrow"> Security Intelligence Platform</div>
+    <div class="brand-title">HoneyShield</div>
+    <div class="brand-sub">
+      Honeypot-powered threat detection. Monitor attacks, catch intruders, protect your systems.
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-num">🍯</div>
+      <div class="stat-lbl">Honeypot</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">🔐</div>
+      <div class="stat-lbl">Auth Guard</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">📊</div>
+      <div class="stat-lbl">Live Logs</div>
+    </div>
+  </div>
+
+  <!-- ACTION CARDS -->
+  <div class="cards">
+    <a class="action-card register" href="register.html">
+      <div class="card-icon">✦</div>
+      <div class="card-text">
+        <div class="card-title">New Operator</div>
+        <div class="card-desc">Create a new account to start monitoring threats</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a class="action-card login" href="login.html">
+      <div class="card-icon">🔑</div>
+      <div class="card-text">
+        <div class="card-title">Operator Login</div>
+        <div class="card-desc">Sign in to your security dashboard</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a class="action-card admin" href="admin-login.html">
+      <div class="card-icon">⚠</div>
+      <div class="card-text">
+        <div class="card-title">Admin Panel</div>
+        <div class="card-desc">Restricted — administrator access only</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="footer">// HONEYSHIELD v2.0 — ALL CONNECTIONS MONITORED</div>
+
+</div>
+
+<script>
+// Matrix
+const mc = document.getElementById('matrix'), mct = mc.getContext('2d');
+function rsz() { mc.width = innerWidth; mc.height = innerHeight; }
+rsz(); window.addEventListener('resize', rsz);
+const chars = '01アイウエオカキクケコ!@#$%&';
+let cols = [];
+function initC() { cols = Array.from({length:Math.floor(mc.width/16)},()=>Math.random()*-mc.height); }
+initC(); window.addEventListener('resize', initC);
+setInterval(() => {
+  mct.fillStyle='rgba(3,1,10,.07)'; mct.fillRect(0,0,mc.width,mc.height);
+  mct.font='12px JetBrains Mono';
+  cols.forEach((y,i) => {
+    const a=0.3+Math.random()*0.4;
+    mct.fillStyle=Math.random()>.95?`rgba(0,245,255,${a})`:`rgba(124,58,237,${a*0.4})`;
+    mct.fillText(chars[Math.floor(Math.random()*chars.length)],i*16,y);
+    if(y>mc.height&&Math.random()>.975) cols[i]=0;
+    cols[i]+=14;
+  });
+},55);
+
+
+</script>
+</body>
+</html>

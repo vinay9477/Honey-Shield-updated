@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | HoneyShield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #06030f;
+      --surface: rgba(10, 7, 20, 0.97);
+      --card: rgba(12, 9, 22, 0.95);
+      --border: rgba(255,255,255,0.065);
+      --border-r: rgba(255,42,74,0.18);
+      --red: #ff2a4a;
+      --red-dim: rgba(255,42,74,0.12);
+      --violet: #8b23e8;
+      --cyan: #00e5ff;
+      --green: #00f596;
+      --amber: #ffb830;
+      --orange: #ff7128;
+      --text: #f0eafa;
+      --muted: rgba(240,234,250,0.45);
+      --dim: rgba(240,234,250,0.2);
+      --sb: 230px;
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; }
+
+    /* ── BG ── */
+    #bgCanvas { position: fixed; inset: 0; z-index: 0; opacity: 0.045; pointer-events: none; }
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,42,74,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,42,74,0.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+    .bg-glow-1 { position:fixed;width:700px;height:700px;top:-200px;right:-100px;background:radial-gradient(circle,rgba(139,35,232,0.09) 0%,transparent 70%);pointer-events:none;z-index:0; }
+    .bg-glow-2 { position:fixed;width:500px;height:500px;bottom:-100px;left:100px;background:radial-gradient(circle,rgba(255,42,74,0.06) 0%,transparent 70%);pointer-events:none;z-index:0; }
+
+    /* ── TOP DANGER STRIPE ── */
+    .danger-stripe {
+      position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 100;
+      background: repeating-linear-gradient(90deg,var(--red) 0px,var(--red) 20px,#000 20px,#000 30px);
+      animation: stripeScroll 1.2s linear infinite;
+    }
+    @keyframes stripeScroll { from{background-position:0} to{background-position:30px 0} }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sb); flex-shrink: 0;
+      background: rgba(6,3,15,0.98);
+      border-right: 1px solid var(--border-r);
+      display: flex; flex-direction: column;
+      position: relative; z-index: 2; height: 100vh; overflow: hidden;
+      padding-top: 2px;
+    }
+    .sidebar::after {
+      content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(255,42,74,0.5), rgba(139,35,232,0.4), transparent);
+      opacity: 0.6;
+    }
+
+    .sb-brand { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); }
+    .sb-eyebrow { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:3px; color:rgba(255,42,74,0.6); margin-bottom:8px; }
+    .sb-logo { display:flex; align-items:center; gap:10px; }
+    .sb-icon-wrap {
+      width:34px; height:34px; background:rgba(255,42,74,0.1);
+      border:1px solid rgba(255,42,74,0.3); border-radius:3px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
+    }
+    .sb-name { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; letter-spacing:1px; background:linear-gradient(90deg,var(--red),#ff7090); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+    .sb-tag { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2px; color:rgba(255,42,74,0.4); }
+
+    .sb-section { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:3px; color:var(--dim); padding:14px 18px 6px; text-transform:uppercase; }
+    .sb-nav { list-style:none; padding:0 10px; display:flex; flex-direction:column; gap:2px; }
+    .sb-nav li {
+      display:flex; align-items:center; gap:10px;
+      padding:9px 11px; border-radius:3px;
+      font-size:13px; font-weight:400; color:var(--muted);
+      cursor:pointer; transition:all .2s; border:1px solid transparent;
+      position:relative; letter-spacing:0.3px;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    }
+    .sb-nav li .nav-icon { width:15px; height:15px; flex-shrink:0; opacity:0.5; transition:opacity .2s; }
+    .sb-nav li:hover { color:var(--text); background:rgba(255,42,74,0.06); border-color:rgba(255,42,74,0.12); }
+    .sb-nav li:hover .nav-icon { opacity:0.85; }
+    .sb-nav li.active { color:var(--red); background:rgba(255,42,74,0.09); border-color:rgba(255,42,74,0.22); font-weight:500; }
+    .sb-nav li.active .nav-icon { opacity:1; }
+    .nav-ind { position:absolute; left:0; top:4px; bottom:4px; width:2px; background:var(--red); border-radius:0 2px 2px 0; box-shadow:0 0 8px var(--red); }
+
+    .sb-divider { height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.055),transparent); margin:8px 10px; }
+
+    /* Sidebar stat box */
+    .sb-stats { margin:0 10px; padding:12px; background:rgba(255,42,74,0.05); border:1px solid rgba(255,42,74,0.12); border-radius:3px; }
+    .sb-stat-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .sb-stat-row:last-child { margin-bottom:0; }
+    .sb-stat-lbl { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); text-transform:uppercase; }
+    .sb-stat-num { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; line-height:1; }
+    .sb-stat-num.r { color:var(--red); }
+    .sb-stat-num.c { color:var(--cyan); }
+    .sb-stat-num.g { color:var(--green); }
+
+    .sb-bottom { margin-top:auto; padding:14px 10px; border-top:1px solid var(--border); }
+    .admin-pill {
+      display:flex; align-items:center; gap:10px; padding:10px 11px;
+      background:rgba(255,255,255,0.03); border:1px solid var(--border);
+      border-radius:3px; margin-bottom:10px;
+    }
+    .admin-avatar {
+      width:30px; height:30px; border-radius:2px;
+      background:linear-gradient(135deg,var(--red),var(--violet));
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; color:white; flex-shrink:0;
+    }
+    .admin-name { font-size:13px; font-weight:500; color:var(--text); }
+    .admin-role { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:1.5px; color:rgba(255,42,74,0.6); text-transform:uppercase; }
+    .btn-logout {
+      width:100%; padding:9px;
+      background:rgba(255,42,74,0.07); border:1px solid rgba(255,42,74,0.2); border-radius:3px;
+      color:var(--red); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px;
+      cursor:pointer; transition:all .2s; text-transform:uppercase;
+    }
+    .btn-logout:hover { background:rgba(255,42,74,0.14); border-color:rgba(255,42,74,0.4); }
+
+    /* ── MAIN ── */
+    .main { flex:1; min-width:0; height:100vh; overflow-y:auto; overflow-x:hidden; position:relative; z-index:1; display:flex; flex-direction:column; padding-top:2px; }
+    .main::-webkit-scrollbar { width:4px; }
+    .main::-webkit-scrollbar-thumb { background:rgba(255,42,74,0.2); border-radius:2px; }
+
+    /* TOPBAR */
+    .topbar {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 26px; border-bottom:1px solid var(--border);
+      background:rgba(6,3,15,0.9); backdrop-filter:blur(16px);
+      position:sticky; top:0; z-index:10; flex-shrink:0;
+    }
+    .topbar::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,42,74,0.25),rgba(139,35,232,0.2),transparent); }
+    .tb-left { display:flex; flex-direction:column; gap:2px; }
+    .tb-title { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; letter-spacing:1px; }
+    .tb-path { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1.5px; color:var(--dim); }
+    .tb-right { display:flex; align-items:center; gap:14px; }
+    .tb-clock { font-family:'DM Mono',monospace; font-size:11px; color:var(--dim); letter-spacing:1px; }
+    .alert-badge {
+      display:flex; align-items:center; gap:6px;
+      font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px;
+      color:var(--red); padding:5px 12px;
+      background:rgba(255,42,74,0.08); border:1px solid rgba(255,42,74,0.22); border-radius:2px;
+    }
+    .alert-dot { width:6px; height:6px; border-radius:50%; background:var(--red); animation:blink 1.4s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.2} }
+
+    /* CONTENT */
+    .content { padding:22px 26px; display:flex; flex-direction:column; gap:18px; flex:1; }
+
+    /* ── STAT CARDS ── */
+    .stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    .scard {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:3px; padding:18px 20px;
+      position:relative; overflow:hidden; transition:all .25s;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+    }
+    .scard::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; }
+    .scard.r::before { background:linear-gradient(90deg,var(--red),transparent); }
+    .scard.c::before { background:linear-gradient(90deg,var(--cyan),transparent); }
+    .scard.v::before { background:linear-gradient(90deg,var(--violet),transparent); }
+    .scard.a::before { background:linear-gradient(90deg,var(--amber),transparent); }
+    .scard:hover { transform:translateY(-3px); border-color:rgba(255,255,255,0.1); }
+    .scard-corner { position:absolute; top:0; right:0; width:10px; height:10px; }
+    .scard.r .scard-corner { background:var(--red); clip-path:polygon(100% 0,0 0,100% 100%); }
+    .scard.c .scard-corner { background:var(--cyan); clip-path:polygon(100% 0,0 0,100% 100%); }
+    .scard.v .scard-corner { background:var(--violet); clip-path:polygon(100% 0,0 0,100% 100%); }
+    .scard.a .scard-corner { background:var(--amber); clip-path:polygon(100% 0,0 0,100% 100%); }
+    .scard-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2.5px; color:var(--dim); text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; gap:5px; }
+    .scard-label::before { content:'//'; }
+    .scard-val { font-family:'Rajdhani',sans-serif; font-size:38px; font-weight:700; line-height:1; margin-bottom:4px; }
+    .scard.r .scard-val { color:var(--red); }
+    .scard.c .scard-val { color:var(--cyan); }
+    .scard.v .scard-val { color:#b06bff; }
+    .scard.a .scard-val { color:var(--amber); }
+    .scard-sub { font-size:11px; color:var(--dim); }
+
+    /* ── PANEL ── */
+    .panel {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:3px; overflow:hidden; position:relative;
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+    }
+    .panel::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,42,74,0.3),rgba(139,35,232,0.2),transparent); }
+    .panel-corner { position:absolute; top:0; right:0; width:12px; height:12px; background:rgba(255,42,74,0.3); clip-path:polygon(100% 0,0 0,100% 100%); }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; padding:13px 18px; border-bottom:1px solid var(--border); }
+    .panel-title { font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:600; letter-spacing:0.5px; display:flex; align-items:center; gap:8px; }
+    .panel-title-icon { width:16px; height:16px; opacity:0.8; }
+    .panel-meta { font-family:'DM Mono',monospace; font-size:9px; color:var(--dim); letter-spacing:1px; }
+
+    /* ── CHARTS ── */
+    .charts-row { display:grid; grid-template-columns:1.5fr 1fr; gap:12px; }
+    .chart-wrap { height:230px; padding:14px 18px; position:relative; }
+
+    .mid-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+    /* ── TABLE ── */
+    .tbl-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    thead { background:rgba(255,255,255,0.025); border-bottom:1px solid var(--border); }
+    th { padding:10px 14px; text-align:left; font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2.5px; color:var(--dim); text-transform:uppercase; white-space:nowrap; }
+    td { padding:11px 14px; border-bottom:1px solid rgba(255,255,255,0.035); font-size:12px; color:var(--muted); vertical-align:middle; }
+    tbody tr { transition:background .15s; }
+    tbody tr:hover { background:rgba(255,42,74,0.04); }
+    tbody tr:last-child td { border-bottom:none; }
+
+    /* ── BADGES ── */
+    .badge { display:inline-block; padding:2px 8px; border-radius:2px; font-family:'DM Mono',monospace; font-size:8px; letter-spacing:1px; border:1px solid; white-space:nowrap; }
+    .badge-green  { background:rgba(0,245,150,0.08); color:var(--green); border-color:rgba(0,245,150,0.2); }
+    .badge-red    { background:rgba(255,42,74,0.08);  color:var(--red);   border-color:rgba(255,42,74,0.2); }
+    .badge-violet { background:rgba(139,35,232,0.1);  color:#b06bff;      border-color:rgba(139,35,232,0.25); }
+    .badge-amber  { background:rgba(255,184,48,0.08); color:var(--amber); border-color:rgba(255,184,48,0.2); }
+    .badge-cyan   { background:rgba(0,229,255,0.08);  color:var(--cyan);  border-color:rgba(0,229,255,0.2); }
+    .badge-dim    { background:rgba(255,255,255,0.04);color:var(--muted); border-color:var(--border); }
+
+    .type-AUTH,.type-LOGIN_SUCCESS   { background:rgba(0,245,150,0.08); color:var(--green); border-color:rgba(0,245,150,0.2); }
+    .type-LOGIN_FAIL,.type-BRUTE_FORCE { background:rgba(255,42,74,0.08); color:var(--red); border-color:rgba(255,42,74,0.2); }
+    .type-SQL_INJECTION              { background:rgba(249,113,32,0.1); color:#ff7128; border-color:rgba(249,113,32,0.25); }
+    .type-XSS_ATTACK                 { background:rgba(234,179,8,0.08); color:#fde047; border-color:rgba(234,179,8,0.2); }
+    .type-CSRF_TEST                  { background:rgba(59,130,246,0.08); color:#60a5fa; border-color:rgba(59,130,246,0.2); }
+    .type-DDOS_ATTACK                { background:rgba(139,35,232,0.1); color:#b06bff; border-color:rgba(139,35,232,0.25); }
+    .type-HONEYPOT,.type-BOT_DETECTED{ background:rgba(255,184,48,0.08);color:var(--amber);border-color:rgba(255,184,48,0.2); }
+    .type-RATE_LIMIT                 { background:rgba(139,92,246,0.08);color:#a78bfa;border-color:rgba(139,92,246,0.2); }
+    .type-PATH_TRAVERSAL             { background:rgba(236,72,153,0.08);color:#f472b6;border-color:rgba(236,72,153,0.2); }
+    .type-KEYLOGGER_DETECTED         { background:rgba(6,182,212,0.08); color:#22d3ee;border-color:rgba(6,182,212,0.2); }
+    .type-INVALID_FILE_TYPE,.type-OVERSIZED_FILE { background:rgba(20,184,166,0.08);color:#2dd4bf;border-color:rgba(20,184,166,0.2); }
+    .type-UNKNOWN                    { background:rgba(255,255,255,0.04);color:var(--muted);border-color:var(--border); }
+
+    /* ── IP TAG ── */
+    .ip-tag { font-family:'DM Mono',monospace; font-size:10px; color:var(--amber); background:rgba(255,184,48,0.06); padding:2px 7px; border-radius:2px; border:1px solid rgba(255,184,48,0.12); }
+
+    /* ── SEARCH ── */
+    .search-bar { display:flex; gap:8px; padding:11px 14px; border-bottom:1px solid var(--border); }
+    .search-input { flex:1; padding:7px 12px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.07); border-radius:2px; color:var(--text); font-family:'DM Mono',monospace; font-size:12px; outline:none; transition:border-color .2s; }
+    .search-input:focus { border-color:rgba(255,42,74,0.35); }
+    .search-input::placeholder { color:var(--dim); }
+    .filter-select { padding:7px 11px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.07); border-radius:2px; color:var(--text); font-family:'DM Mono',monospace; font-size:10px; outline:none; cursor:pointer; }
+    .filter-select option { background:#0c0918; }
+
+    /* ── DRAWER ── */
+    .drawer { position:fixed; top:0; right:-600px; width:560px; height:100vh; background:rgba(8,5,18,0.99); border-left:1px solid rgba(255,42,74,0.2); z-index:100; display:flex; flex-direction:column; transition:right .35s cubic-bezier(.16,1,.3,1); backdrop-filter:blur(20px); }
+    .drawer.open { right:0; }
+    .drawer-head { display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .drawer-title { font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700; letter-spacing:0.5px; }
+    .drawer-email { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); margin-top:2px; }
+    .drawer-close { width:30px; height:30px; border-radius:2px; background:rgba(255,42,74,0.1); border:1px solid rgba(255,42,74,0.2); color:var(--red); font-size:14px; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; }
+    .drawer-close:hover { background:rgba(255,42,74,0.2); }
+    .drawer-body { flex:1; overflow-y:auto; padding:16px 22px; }
+    .drawer-body::-webkit-scrollbar { width:3px; }
+    .drawer-body::-webkit-scrollbar-thumb { background:rgba(255,42,74,0.2); }
+    .drawer-info { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+    .di-card { background:rgba(255,255,255,0.025); border:1px solid var(--border); border-radius:2px; padding:10px 12px; }
+    .di-lbl { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--dim); margin-bottom:4px; text-transform:uppercase; }
+    .di-val { font-size:12px; font-weight:500; color:var(--text); word-break:break-all; }
+    .overlay { position:fixed; inset:0; background:rgba(3,1,10,0.65); z-index:99; display:none; backdrop-filter:blur(4px); }
+    .overlay.show { display:block; }
+
+    /* ── PAGINATION ── */
+    .pagination { display:flex; align-items:center; justify-content:space-between; padding:11px 18px; border-top:1px solid var(--border); }
+    .page-info { font-family:'DM Mono',monospace; font-size:9px; color:var(--dim); letter-spacing:1px; }
+    .page-btns { display:flex; gap:3px; }
+    .page-btn { padding:4px 9px; font-family:'DM Mono',monospace; font-size:9px; border:1px solid var(--border); border-radius:2px; background:transparent; color:var(--muted); cursor:pointer; transition:all .2s; }
+    .page-btn:hover:not(:disabled) { border-color:rgba(255,42,74,0.35); color:var(--red); }
+    .page-btn.active { background:rgba(255,42,74,0.08); border-color:rgba(255,42,74,0.35); color:var(--red); }
+    .page-btn:disabled { opacity:.3; cursor:not-allowed; }
+
+    /* ── VIEW BTN ── */
+    .btn-view { padding:3px 10px; font-family:'DM Mono',monospace; font-size:8px; letter-spacing:1px; border:1px solid rgba(0,229,255,0.2); border-radius:2px; background:rgba(0,229,255,0.05); color:var(--cyan); cursor:pointer; transition:all .2s; }
+    .btn-view:hover { background:rgba(0,229,255,0.1); border-color:rgba(0,229,255,0.4); }
+
+    /* ── EMPTY / LOADING ── */
+    .empty-row td { text-align:center; padding:40px!important; font-family:'DM Mono',monospace; font-size:10px; color:var(--dim); letter-spacing:1px; }
+    .loading-td { text-align:center; padding:40px!important; }
+    .spinner { width:18px; height:18px; border:2px solid rgba(255,42,74,0.2); border-top-color:var(--red); border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    @keyframes rowIn { from{opacity:0;transform:translateX(-5px)} to{opacity:1;transform:none} }
+
+    /* ── USER STAT STRIP ── */
+    .user-stat-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    .uss-card { background:var(--card); border:1px solid var(--border); border-radius:3px; padding:16px 18px; display:flex; flex-direction:column; gap:4px; position:relative; overflow:hidden; transition:transform .2s; }
+    .uss-card:hover { transform:translateY(-2px); }
+    .uss-card::before { content:''; position:absolute; top:0; left:0; bottom:0; width:2px; }
+    .uss-card.r::before { background:var(--red); }
+    .uss-card.c::before { background:var(--cyan); }
+    .uss-card.g::before { background:var(--green); }
+    .uss-card.a::before { background:var(--amber); }
+    .uss-val { font-family:'Rajdhani',sans-serif; font-size:32px; font-weight:700; line-height:1; }
+    .uss-card.r .uss-val { color:var(--red); }
+    .uss-card.c .uss-val { color:var(--cyan); }
+    .uss-card.g .uss-val { color:var(--green); }
+    .uss-card.a .uss-val { color:var(--amber); }
+    .uss-lbl { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--dim); text-transform:uppercase; }
+
+    /* ── USER TABLE EXTRAS ── */
+    .user-cell { display:flex; flex-direction:column; gap:2px; }
+    .user-name { font-size:13px; font-weight:500; color:var(--text); }
+    .user-email { font-family:'DM Mono',monospace; font-size:10px; color:var(--cyan); }
+    .log-bar-wrap { display:flex; align-items:center; gap:7px; }
+    .log-bar { height:4px; border-radius:2px; background:rgba(255,42,74,0.15); flex:1; max-width:60px; overflow:hidden; }
+    .log-bar-fill { height:100%; border-radius:2px; background:var(--red); transition:width .4s ease; }
+    .log-count { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); min-width:24px; }
+    .btn-danger { padding:3px 9px; font-family:'DM Mono',monospace; font-size:8px; letter-spacing:1px; border:1px solid rgba(255,42,74,0.25); border-radius:2px; background:rgba(255,42,74,0.07); color:var(--red); cursor:pointer; transition:all .2s; }
+    .btn-danger:hover { background:rgba(255,42,74,0.18); border-color:rgba(255,42,74,0.5); }
+    .actions-cell { display:flex; gap:5px; align-items:center; flex-wrap:nowrap; }
+
+    /* ── SERVICE EDITOR MODAL ── */
+    .svc-modal-backdrop { position:fixed;inset:0;z-index:200;background:rgba(3,1,10,0.8);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s; }
+    .svc-modal-backdrop.open { opacity:1;pointer-events:all; }
+    .svc-modal { background:#0c0918; border:1px solid rgba(255,255,255,0.08); border-radius:4px; width:100%;max-width:380px;margin:16px; overflow:hidden; box-shadow:0 40px 100px rgba(0,0,0,0.7); transform:translateY(14px) scale(0.97); transition:transform .3s cubic-bezier(.16,1,.3,1); }
+    .svc-modal-backdrop.open .svc-modal { transform:none; }
+    .svc-modal::before { content:'';display:block;height:2px;background:linear-gradient(90deg,var(--red),var(--violet)); }
+    .svc-modal-head { padding:18px 22px 14px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex;align-items:center;justify-content:space-between; }
+    .svc-modal-title { font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;letter-spacing:0.5px; }
+    .svc-modal-sub { font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);margin-top:2px; }
+    .svc-modal-body { padding:20px 22px; display:flex;flex-direction:column;gap:14px; }
+    .svc-options { display:grid;grid-template-columns:1fr 1fr;gap:8px; }
+    .svc-opt { padding:10px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:3px; cursor:pointer; transition:all .2s; text-align:center; }
+    .svc-opt:hover { border-color:rgba(0,229,255,0.3); background:rgba(0,229,255,0.05); }
+    .svc-opt.selected { border-color:rgba(0,229,255,0.5); background:rgba(0,229,255,0.08); }
+    .svc-opt-name { font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text);letter-spacing:1px; }
+    .svc-opt-desc { font-size:10px;color:var(--dim);margin-top:3px; }
+    .btn-svc-save { width:100%;padding:11px;background:linear-gradient(135deg,var(--cyan),#0095b3);border:none;border-radius:3px;color:#06030f;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .2s; }
+    .btn-svc-save:hover { transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,229,255,0.25); }
+
+    /* ── CONFIRM MODAL ── */
+    .confirm-modal-backdrop { position:fixed;inset:0;z-index:300;background:rgba(3,1,10,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s; }
+    .confirm-modal-backdrop.open { opacity:1;pointer-events:all; }
+    .confirm-modal { background:#0c0918;border:1px solid rgba(255,42,74,0.2);border-radius:4px;width:100%;max-width:340px;margin:16px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.7);transform:scale(0.95);transition:transform .25s cubic-bezier(.16,1,.3,1); }
+    .confirm-modal-backdrop.open .confirm-modal { transform:scale(1); }
+    .confirm-modal::before { content:'';display:block;height:2px;background:var(--red); }
+    .confirm-modal-body { padding:22px;text-align:center; }
+    .confirm-icon { font-size:40px;margin-bottom:12px; }
+    .confirm-title { font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--red);margin-bottom:6px; }
+    .confirm-sub { font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px; }
+    .confirm-btns { display:flex;gap:8px; }
+    .btn-confirm-yes { flex:1;padding:10px;background:rgba(255,42,74,0.12);border:1px solid rgba(255,42,74,0.3);border-radius:3px;color:var(--red);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;cursor:pointer;transition:all .2s; }
+    .btn-confirm-yes:hover { background:rgba(255,42,74,0.22); }
+    .btn-confirm-no { flex:1;padding:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:3px;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;cursor:pointer;transition:all .2s; }
+    .btn-confirm-no:hover { background:rgba(255,255,255,0.08);color:var(--text); }
+  </style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div class="bg-grid"></div>
+<div class="bg-glow-1"></div>
+<div class="bg-glow-2"></div>
+<div class="danger-stripe"></div>
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+
+<!-- USER DRAWER -->
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div>
+      <div class="drawer-title" id="drawerTitle">User Logs</div>
+      <div class="drawer-email" id="drawerEmail"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-info" id="drawerInfo"></div>
+    <div id="drawerLogWrap"></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-eyebrow">// ADMIN PANEL</div>
+    <div class="sb-logo">
+      <div class="sb-icon-wrap">🛡️</div>
+      <div>
+        <div class="sb-name">HoneyShield</div>
+        <div class="sb-tag">CONTROL CENTER</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sb-section">// Navigation</div>
+  <ul class="sb-nav">
+    <li class="active" onclick="showSection('overview')">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="11" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+      <span>Overview</span>
+      <div class="nav-ind"></div>
+    </li>
+    <li onclick="showSection('users')">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>All Users</span>
+    </li>
+    <li onclick="showSection('logs')">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h10M3 15h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>System Logs</span>
+    </li>
+    <li onclick="showSection('charts')">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><path d="M2 14l5-5 4 3 5-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Analytics</span>
+    </li>
+  </ul>
+
+  <div class="sb-divider" style="margin-top:16px"></div>
+  <div class="sb-section">// Live Stats</div>
+  <div class="sb-stats">
+    <div class="sb-stat-row">
+      <span class="sb-stat-lbl">Total Users</span>
+      <span class="sb-stat-num c" id="sbUsers">—</span>
+    </div>
+    <div class="sb-stat-row">
+      <span class="sb-stat-lbl">Threats</span>
+      <span class="sb-stat-num r" id="sbThreats">—</span>
+    </div>
+    <div class="sb-stat-row">
+      <span class="sb-stat-lbl">Log Entries</span>
+      <span class="sb-stat-num g" id="sbLogs">—</span>
+    </div>
+  </div>
+
+  <div class="sb-bottom">
+    <div class="admin-pill">
+      <div class="admin-avatar" id="adminAvatar">A</div>
+      <div>
+        <div class="admin-name" id="adminName">Admin</div>
+        <div class="admin-role">Superadmin</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="logout()">⏻ &nbsp;LOGOUT</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="tb-left">
+      <div class="tb-title" id="sectionTitle">Admin Overview</div>
+      <div class="tb-path">// HoneyShield / Control Center / <span id="tbPathSub" style="color:var(--red)">Overview</span></div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-clock" id="clock">--:--:--</div>
+      <div class="alert-badge"><div class="alert-dot"></div>ADMIN MODE</div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div id="sec-overview">
+      <div class="stat-row" style="margin-bottom:16px">
+        <div class="scard c"><div class="scard-corner"></div><div class="scard-label">Total Users</div><div class="scard-val" id="statUsers">—</div><div class="scard-sub">Registered operators</div></div>
+        <div class="scard v"><div class="scard-corner"></div><div class="scard-label">Active Services</div><div class="scard-val" id="statServices">—</div><div class="scard-sub">Deployed honeypots</div></div>
+        <div class="scard r"><div class="scard-corner"></div><div class="scard-label">Total Threats</div><div class="scard-val" id="statThreats">—</div><div class="scard-sub">Attack events caught</div></div>
+        <div class="scard a"><div class="scard-corner"></div><div class="scard-label">System Logs</div><div class="scard-val" id="statLogs">—</div><div class="scard-sub">Total log entries</div></div>
+      </div>
+
+      <div class="charts-row" style="margin-bottom:16px">
+        <div class="panel">
+          <div class="panel-corner"></div>
+          <div class="panel-head">
+            <div class="panel-title">
+              <svg class="panel-title-icon" viewBox="0 0 16 16" fill="none"><path d="M2 11l3-4 3 2.5 4-5.5" stroke="var(--red)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Attack Trends — Last 7 Days
+            </div>
+            <div class="panel-meta" id="chartMeta">Loading...</div>
+          </div>
+          <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-corner"></div>
+          <div class="panel-head">
+            <div class="panel-title">
+              <svg class="panel-title-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="var(--amber)" stroke-width="1.5"/><path d="M8 2.5V8l3 3" stroke="var(--amber)" stroke-width="1.5" stroke-linecap="round"/></svg>
+              Attack Distribution
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="distChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-corner"></div>
+        <div class="panel-head">
+          <div class="panel-title">
+            <svg class="panel-title-icon" viewBox="0 0 16 16" fill="none"><path d="M2 3h12M2 8h8M2 13h5" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Recent Events
+          </div>
+          <button class="btn-view" onclick="showSection('logs')" style="padding:5px 12px;font-size:9px">VIEW ALL →</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Time</th><th>User</th><th>Type</th><th>IP</th><th>Message</th></tr></thead>
+            <tbody id="recentLogs"><tr><td colspan="5" class="loading-td"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div id="sec-users" style="display:none">
+
+      <!-- Summary stat strip -->
+      <div class="user-stat-strip" id="userStatStrip" style="margin-bottom:14px">
+        <div class="uss-card c"><div class="uss-val" id="ussTotalUsers">—</div><div class="uss-lbl">Total Users</div></div>
+        <div class="uss-card g"><div class="uss-val" id="ussVerified">—</div><div class="uss-lbl">Verified</div></div>
+        <div class="uss-card a"><div class="uss-val" id="ussWithService">—</div><div class="uss-lbl">With Service</div></div>
+        <div class="uss-card r"><div class="uss-val" id="ussWithLogs">—</div><div class="uss-lbl">Have Logs</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-corner"></div>
+        <div class="panel-head">
+          <div class="panel-title">
+            <svg class="panel-title-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="2.5" stroke="var(--cyan)" stroke-width="1.5"/><path d="M2 13.5c0-2.8 2.7-5 6-5s6 2.2 6 5" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round"/></svg>
+            All Users
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="panel-meta" id="usersMeta">Loading...</div>
+          </div>
+        </div>
+        <div class="search-bar">
+          <input class="search-input" id="userSearch" placeholder="Search by name, email or org..." oninput="filterUsers()" style="flex:2">
+          <select class="filter-select" id="svcFilter" onchange="filterUsers()">
+            <option value="">All Services</option>
+            <option value="active">Has Service</option>
+            <option value="none">No Service</option>
+          </select>
+          <select class="filter-select" id="verifiedFilter" onchange="filterUsers()">
+            <option value="">All Status</option>
+            <option value="yes">Verified</option>
+            <option value="no">Unverified</option>
+          </select>
+          <select class="filter-select" id="sortFilter" onchange="filterUsers()">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="logs">Most Logs</option>
+            <option value="name">Name A–Z</option>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>User</th>
+                <th>Organization</th>
+                <th>Service</th>
+                <th>Logs</th>
+                <th>Verified</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersBody"><tr><td colspan="8" class="loading-td"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="page-info" id="userPageInfo">—</div>
+          <div class="page-btns" id="userPageBtns"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div id="sec-logs" style="display:none">
+      <div class="panel">
+        <div class="panel-corner"></div>
+        <div class="panel-head">
+          <div class="panel-title">
+            <svg class="panel-title-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="var(--violet)" stroke-width="1.5"/><path d="M5 6h6M5 9h4" stroke="var(--violet)" stroke-width="1.5" stroke-linecap="round"/></svg>
+            System Logs
+          </div>
+          <div class="panel-meta" id="logsMeta">Loading...</div>
+        </div>
+        <div class="search-bar">
+          <input class="search-input" id="logSearch" placeholder="Search IP, type or message..." oninput="filterLogs()">
+          <select class="filter-select" id="logTypeFilter" onchange="filterLogs()">
+            <option value="">All Types</option>
+            <optgroup label="Auth"><option value="AUTH">AUTH</option><option value="LOGIN_SUCCESS">LOGIN SUCCESS</option><option value="LOGIN_FAIL">LOGIN FAIL</option></optgroup>
+            <optgroup label="Attacks"><option value="HONEYPOT">HONEYPOT</option><option value="BOT_DETECTED">BOT</option><option value="SQL_INJECTION">SQL INJECTION</option><option value="XSS_ATTACK">XSS</option><option value="CSRF_TEST">CSRF</option><option value="BRUTE_FORCE">BRUTE FORCE</option><option value="RATE_LIMIT">RATE LIMIT</option><option value="PATH_TRAVERSAL">PATH TRAVERSAL</option><option value="DDOS_ATTACK">DDOS</option><option value="KEYLOGGER_DETECTED">KEYLOGGER</option><option value="INVALID_FILE_TYPE">FILE UPLOAD</option></optgroup>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Time</th><th>User</th><th>Type</th><th>IP</th><th>Message</th></tr></thead>
+            <tbody id="logsBody"><tr><td colspan="5" class="loading-td"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="page-info" id="logPageInfo">—</div>
+          <div class="page-btns" id="logPageBtns"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div id="sec-charts" style="display:none">
+      <div class="charts-row" style="margin-bottom:16px">
+        <div class="panel">
+          <div class="panel-corner"></div>
+          <div class="panel-head"><div class="panel-title">Attacks by Type</div></div>
+          <div class="chart-wrap" style="height:260px"><canvas id="typeBarChart"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-corner"></div>
+          <div class="panel-head"><div class="panel-title">Top Targeted Users</div></div>
+          <div class="chart-wrap" style="height:260px"><canvas id="userBarChart"></canvas></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-corner"></div>
+        <div class="panel-head"><div class="panel-title">Daily Log Volume (Last 14 Days)</div></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="volumeChart"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── BG CANVAS (red matrix) ─────────────────────────────────────
+const mc=document.getElementById('bgCanvas'),mct=mc.getContext('2d');
+function rsz(){mc.width=innerWidth;mc.height=innerHeight}rsz();window.addEventListener('resize',rsz);
+const chars='01アイウエオ!@#$%^&*';let cols=[];
+function initC(){cols=Array.from({length:Math.floor(mc.width/16)},()=>Math.random()*-mc.height)}
+initC();window.addEventListener('resize',initC);
+setInterval(()=>{
+  mct.fillStyle='rgba(6,3,15,.07)';mct.fillRect(0,0,mc.width,mc.height);
+  mct.font='12px DM Mono';
+  cols.forEach((y,i)=>{
+    const a=0.3+Math.random()*0.4;
+    mct.fillStyle=Math.random()>.95?`rgba(255,42,74,${a})`:`rgba(139,35,232,${a*0.3})`;
+    mct.fillText(chars[Math.floor(Math.random()*chars.length)],i*16,y);
+    if(y>mc.height&&Math.random()>.975)cols[i]=0;cols[i]+=14;
+  });
+},55);
+
+// ── CLOCK ─────────────────────────────────────────────────────
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toTimeString().split(' ')[0]+' UTC';},1000);
+
+// ── AUTH GUARD ────────────────────────────────────────────────
+const adminRaw=localStorage.getItem('admin');
+if(!adminRaw){window.location.href='admin-login.html';}
+const admin=JSON.parse(adminRaw||'{}');
+document.getElementById('adminName').textContent=admin.username||'Admin';
+document.getElementById('adminAvatar').textContent=(admin.username||'A')[0].toUpperCase();
+function logout(){localStorage.removeItem('admin');window.location.href='admin-login.html';}
+
+// ── SECTIONS ──────────────────────────────────────────────────
+const sections=['overview','users','logs','charts'];
+const sectionTitles={overview:'Admin Overview',users:'All Users',logs:'System Logs',charts:'Analytics'};
+function showSection(id){
+  sections.forEach(s=>document.getElementById('sec-'+s).style.display=s===id?'':'none');
+  document.querySelectorAll('.sb-nav li').forEach((li,i)=>{
+    li.classList.toggle('active',sections[i]===id);
+    li.querySelector('.nav-ind')?.remove();
+    if(sections[i]===id){const ind=document.createElement('div');ind.className='nav-ind';li.appendChild(ind);}
+  });
+  document.getElementById('sectionTitle').textContent=sectionTitles[id];
+  document.getElementById('tbPathSub').textContent=sectionTitles[id];
+}
+
+// ── DATA ──────────────────────────────────────────────────────
+let allUsers=[],allLogs=[],filteredUsers=[],filteredLogs=[];
+let userPage=1,logPage=1;
+const PAGE=20;
+const ATTACK_CATS=['BRUTE_FORCE','SQL_INJECTION','XSS_ATTACK','DDOS_ATTACK','CSRF_TEST','KEYLOGGER','KEYLOGGER_DETECTED','FILE_UPLOAD','INVALID_FILE_TYPE','PATH_TRAVERSAL','RATE_LIMIT','HONEYPOT','BOT_DETECTED'];
+function isAttack(l){const t=(l.type||'').toUpperCase();return ATTACK_CATS.some(k=>t.includes(k));}
+function typeBadge(type){
+  const t=(type||'UNKNOWN').toUpperCase().replace(/\s+/g,'_');
+  const known=['AUTH','LOGIN_SUCCESS','LOGIN_FAIL','BRUTE_FORCE','SQL_INJECTION','XSS_ATTACK','CSRF_TEST','DDOS_ATTACK','HONEYPOT','BOT_DETECTED','RATE_LIMIT','PATH_TRAVERSAL','KEYLOGGER_DETECTED','INVALID_FILE_TYPE','OVERSIZED_FILE'];
+  const cls=known.includes(t)?`type-${t}`:'type-UNKNOWN';
+  return `<span class="badge ${cls}">${t.replace(/_/g,' ')}</span>`;
+}
+
+async function loadAll(){
+  try{
+    const [statsRes,usersRes,logsRes]=await Promise.all([
+      fetch('http://localhost:3000/api/admin/stats'),
+      fetch('http://localhost:3000/api/admin/users'),
+      fetch('http://localhost:3000/api/admin/logs'),
+    ]);
+    const stats=await statsRes.json();
+    allUsers=await usersRes.json()||[];
+    allLogs=await logsRes.json()||[];
+
+    document.getElementById('statUsers').textContent    = stats.totalUsers??allUsers.length;
+    document.getElementById('statServices').textContent = stats.activeServices??'—';
+    document.getElementById('statThreats').textContent  = stats.totalThreats??allLogs.filter(isAttack).length;
+    document.getElementById('statLogs').textContent     = stats.totalLogs??allLogs.length;
+    document.getElementById('sbUsers').textContent   = stats.totalUsers??allUsers.length;
+    document.getElementById('sbThreats').textContent = stats.totalThreats??allLogs.filter(isAttack).length;
+    document.getElementById('sbLogs').textContent    = stats.totalLogs??allLogs.length;
+
+    filteredUsers=[...allUsers]; filteredLogs=[...allLogs];
+    updateUserStats(); renderUsers(); renderLogs(); renderRecentLogs(); buildCharts();
+  }catch(e){
+    console.error('Admin load error:',e);
+    // Still render all sections with empty data so UI is navigable
+    filteredUsers=[...allUsers]; filteredLogs=[...allLogs];
+    updateUserStats(); renderUsers(); renderLogs(); renderRecentLogs();
+    document.getElementById('recentLogs').innerHTML='<tr class="empty-row"><td colspan="5">⚠ Server not reachable — start backend to see live data</td></tr>';
+    document.getElementById('usersBody').innerHTML='<tr class="empty-row"><td colspan="8">⚠ Server not reachable — no users to display</td></tr>';
+    document.getElementById('logsBody').innerHTML='<tr class="empty-row"><td colspan="5">⚠ Server not reachable</td></tr>';
+    ['statUsers','statServices','statThreats','statLogs','sbUsers','sbThreats','sbLogs'].forEach(id=>{
+      if(document.getElementById(id).textContent==='—') document.getElementById(id).textContent='0';
+    });
+    ['ussTotalUsers','ussVerified','ussWithService','ussWithLogs'].forEach(id=>{
+      document.getElementById(id).textContent='0';
+    });
+  }
+}
+
+// ── USERS TABLE ───────────────────────────────────────────────
+function updateUserStats(){
+  const total=allUsers.length;
+  const verified=allUsers.filter(u=>u.isVerified).length;
+  const withSvc=allUsers.filter(u=>u.service&&u.service!=='none'&&u.service!=='').length;
+  const withLogs=allUsers.filter(u=>(u.logCount||0)>0).length;
+  document.getElementById('ussTotalUsers').textContent=total;
+  document.getElementById('ussVerified').textContent=verified;
+  document.getElementById('ussWithService').textContent=withSvc;
+  document.getElementById('ussWithLogs').textContent=withLogs;
+}
+
+function filterUsers(){
+  const q=document.getElementById('userSearch').value.toLowerCase();
+  const svc=document.getElementById('svcFilter').value;
+  const ver=document.getElementById('verifiedFilter').value;
+  const sort=document.getElementById('sortFilter').value;
+  filteredUsers=allUsers.filter(u=>{
+    const text=`${u.name||''} ${u.email||''} ${u.organization||''}`.toLowerCase();
+    if(q&&!text.includes(q))return false;
+    if(svc==='active'&&(!u.service||u.service==='none'||u.service===''))return false;
+    if(svc==='none'&&u.service&&u.service!=='none'&&u.service!=='')return false;
+    if(ver==='yes'&&!u.isVerified)return false;
+    if(ver==='no'&&u.isVerified)return false;
+    return true;
+  });
+  if(sort==='oldest') filteredUsers.sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+  else if(sort==='logs') filteredUsers.sort((a,b)=>(b.logCount||0)-(a.logCount||0));
+  else if(sort==='name') filteredUsers.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  else filteredUsers.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  userPage=1;renderUsers();
+}
+
+// find max logs for bar scaling
+function getMaxLogs(){ return Math.max(1,...allUsers.map(u=>u.logCount||0)); }
+
+function renderUsers(){
+  const body=document.getElementById('usersBody');
+  document.getElementById('usersMeta').textContent=`${filteredUsers.length} of ${allUsers.length} users`;
+  if(!filteredUsers.length){body.innerHTML='<tr class="empty-row"><td colspan="8">No users found</td></tr>';return;}
+  const start=(userPage-1)*PAGE, slice=filteredUsers.slice(start,start+PAGE);
+  const maxLogs=getMaxLogs();
+  body.innerHTML=slice.map((u,i)=>{
+    const hasSvc=u.service&&u.service!=='none'&&u.service!=='';
+    const logCount=u.logCount||0;
+    const barPct=Math.round((logCount/maxLogs)*100);
+    const svcBadge=hasSvc
+      ? `<span class="badge badge-cyan">${u.service.toUpperCase()}</span>`
+      : '<span class="badge badge-dim">NONE</span>';
+    const joined=u.createdAt
+      ? new Date(u.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})
+      : '—';
+    return `<tr style="animation:rowIn .25s ${i*0.02}s ease both">
+<td style="color:var(--dim);font-family:'DM Mono',monospace;font-size:10px">${start+i+1}</td>
+<td>
+  <div class="user-cell">
+    <div class="user-name">${u.name||'<span style="color:var(--dim)">No name</span>'}</div>
+    <div class="user-email">${u.email||'—'}</div>
+  </div>
+</td>
+<td style="font-size:12px;color:var(--muted)">${u.organization||'<span style="color:var(--dim)">—</span>'}</td>
+<td>${svcBadge}</td>
+<td>
+  <div class="log-bar-wrap">
+    <div class="log-bar"><div class="log-bar-fill" style="width:${barPct}%"></div></div>
+    <span class="log-count">${logCount}</span>
+  </div>
+</td>
+<td>${u.isVerified?'<span class="badge badge-green">✓ YES</span>':'<span class="badge badge-red">✗ NO</span>'}</td>
+<td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim)">${joined}</td>
+<td>
+  <div class="actions-cell">
+    <button class="btn-view" onclick="openUserDrawer('${u._id}','${u.email}','${u.name||u.email}')">LOGS</button>
+    <button class="btn-view" onclick="openSvcModal('${u._id}','${u.email}','${u.service||'none'}')">SVC</button>
+    <button class="btn-danger" onclick="confirmDelete('${u._id}','${u.email}')">DEL</button>
+  </div>
+</td>
+</tr>`;
+  }).join('');
+  renderPagination('user',filteredUsers.length);
+}
+
+// ── SERVICE MODAL ─────────────────────────────────────────────
+let svcEditId='', svcEditSel='none';
+function openSvcModal(userId,email,currentSvc){
+  svcEditId=userId; svcEditSel=currentSvc||'none';
+  document.getElementById('svcModalEmail').textContent=email;
+  document.querySelectorAll('.svc-opt').forEach(opt=>{
+    opt.classList.toggle('selected',opt.dataset.val===svcEditSel);
+  });
+  document.getElementById('svcModalBackdrop').classList.add('open');
+}
+function closeSvcModal(){ document.getElementById('svcModalBackdrop').classList.remove('open'); }
+function selectSvc(el){
+  document.querySelectorAll('.svc-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected'); svcEditSel=el.dataset.val;
+}
+async function saveSvc(){
+  if(!svcEditId)return;
+  try{
+    const res=await fetch(`http://localhost:3000/api/admin/users/${svcEditId}/service`,{
+      method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({service:svcEditSel})
+    });
+    if(res.ok){
+      const u=allUsers.find(x=>x._id===svcEditId);
+      if(u) u.service=svcEditSel;
+      filteredUsers=filteredUsers.map(x=>x._id===svcEditId?{...x,service:svcEditSel}:x);
+      renderUsers(); updateUserStats();
+      closeSvcModal();
+    }
+  }catch(e){
+    // Offline: update locally
+    const u=allUsers.find(x=>x._id===svcEditId);
+    if(u) u.service=svcEditSel;
+    filteredUsers=filteredUsers.map(x=>x._id===svcEditId?{...x,service:svcEditSel}:x);
+    renderUsers(); updateUserStats(); closeSvcModal();
+  }
+}
+// close modals on backdrop click — wrapped in DOMContentLoaded so elements exist
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('svcModalBackdrop')?.addEventListener('click',function(e){if(e.target===this)closeSvcModal();});
+  document.getElementById('confirmModalBackdrop')?.addEventListener('click',function(e){if(e.target===this)closeConfirmModal();});
+});
+
+// ── DELETE CONFIRM ────────────────────────────────────────────
+let deleteUserId='';
+function confirmDelete(userId,email){
+  deleteUserId=userId;
+  document.getElementById('confirmModalSub').textContent=`Delete "${email}" and all their logs? This cannot be undone.`;
+  document.getElementById('confirmYesBtn').onclick=doDeleteUser;
+  document.getElementById('confirmModalBackdrop').classList.add('open');
+}
+function closeConfirmModal(){ document.getElementById('confirmModalBackdrop').classList.remove('open'); }
+async function doDeleteUser(){
+  if(!deleteUserId)return;
+  closeConfirmModal();
+  try{
+    await fetch(`http://localhost:3000/api/admin/users/${deleteUserId}`,{method:'DELETE'});
+  }catch(e){}
+  allUsers=allUsers.filter(u=>u._id!==deleteUserId);
+  filteredUsers=filteredUsers.filter(u=>u._id!==deleteUserId);
+  allLogs=allLogs.filter(l=>l.userId!==deleteUserId);
+  renderUsers(); updateUserStats();
+  // update sidebar
+  document.getElementById('sbUsers').textContent=allUsers.length;
+}
+
+// ── LOGS TABLE ────────────────────────────────────────────────
+function filterLogs(){
+  const q=document.getElementById('logSearch').value.toLowerCase();
+  const type=document.getElementById('logTypeFilter').value.toUpperCase();
+  filteredLogs=allLogs.filter(l=>{
+    const text=`${l.ip||''} ${l.type||''} ${l.message||''}`.toLowerCase();
+    if(q&&!text.includes(q))return false;
+    if(type&&!(l.type||'').toUpperCase().includes(type))return false;
+    return true;
+  });
+  logPage=1;renderLogs();
+}
+function renderLogs(){
+  const body=document.getElementById('logsBody');
+  document.getElementById('logsMeta').textContent=`${filteredLogs.length} events`;
+  if(!filteredLogs.length){body.innerHTML='<tr class="empty-row"><td colspan="5">No logs found</td></tr>';return;}
+  const start=(logPage-1)*PAGE, slice=filteredLogs.slice(start,start+PAGE);
+  const userMap={};allUsers.forEach(u=>{userMap[u._id]=u.email;});
+  body.innerHTML=slice.map((l,i)=>{
+    const d=new Date(l.createdAt);
+    const time=d.toLocaleTimeString('en-IN',{hour12:false});
+    const date=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+    const userEmail=l.userId?userMap[l.userId]||'<span style="color:var(--dim)">Unknown</span>':'<span style="color:var(--dim)">Anonymous</span>';
+    const msg=(l.message||'—').substring(0,60)+(l.message?.length>60?'...':'');
+    return `<tr style="animation:rowIn .25s ${i*0.015}s ease both">
+<td><span style="font-family:'DM Mono',monospace;font-size:10px">${time}</span><span style="display:block;font-size:9px;color:var(--dim)">${date}</span></td>
+<td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--cyan);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${userEmail}</td>
+<td>${typeBadge(l.type)}</td>
+<td><span class="ip-tag">${l.ip||'—'}</span></td>
+<td style="color:var(--dim);font-size:11px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${l.message||''}">${msg}</td>
+</tr>`;
+  }).join('');
+  renderPagination('log',filteredLogs.length);
+}
+
+function renderRecentLogs(){
+  const body=document.getElementById('recentLogs');
+  const userMap={};allUsers.forEach(u=>{userMap[u._id]=u.email;});
+  const recent=allLogs.slice(0,8);
+  if(!recent.length){body.innerHTML='<tr class="empty-row"><td colspan="5">No events yet</td></tr>';return;}
+  body.innerHTML=recent.map((l,i)=>{
+    const d=new Date(l.createdAt);
+    const time=d.toLocaleTimeString('en-IN',{hour12:false});
+    const date=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+    const userEmail=l.userId?userMap[l.userId]||'Unknown':'Anonymous';
+    return `<tr style="animation:rowIn .25s ${i*0.04}s ease both">
+<td><span style="font-family:'DM Mono',monospace;font-size:10px">${time}</span><span style="display:block;font-size:9px;color:var(--dim)">${date}</span></td>
+<td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--cyan)">${userEmail}</td>
+<td>${typeBadge(l.type)}</td>
+<td><span class="ip-tag">${l.ip||'—'}</span></td>
+<td style="color:var(--dim);font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(l.message||'—').substring(0,50)}</td>
+</tr>`;
+  }).join('');
+}
+
+// ── PAGINATION ────────────────────────────────────────────────
+function renderPagination(prefix,total){
+  const page=prefix==='user'?userPage:logPage;
+  const pages=Math.ceil(total/PAGE);
+  const start=Math.min((page-1)*PAGE+1,total),end=Math.min(page*PAGE,total);
+  document.getElementById(`${prefix}PageInfo`).textContent=`Showing ${start}–${end} of ${total}`;
+  const btns=document.getElementById(`${prefix}PageBtns`);btns.innerHTML='';
+  const prev=document.createElement('button');prev.className='page-btn';prev.textContent='←';prev.disabled=page===1;
+  prev.onclick=()=>{if(prefix==='user'){userPage--;renderUsers();}else{logPage--;renderLogs();}};
+  btns.appendChild(prev);
+  for(let p=Math.max(1,page-2);p<=Math.min(pages,page+2);p++){
+    const btn=document.createElement('button');btn.className='page-btn'+(p===page?' active':'');btn.textContent=p;
+    btn.onclick=((pg)=>()=>{if(prefix==='user'){userPage=pg;renderUsers();}else{logPage=pg;renderLogs();}})(p);
+    btns.appendChild(btn);
+  }
+  const next=document.createElement('button');next.className='page-btn';next.textContent='→';next.disabled=page>=pages;
+  next.onclick=()=>{if(prefix==='user'){userPage++;renderUsers();}else{logPage++;renderLogs();}};
+  btns.appendChild(next);
+}
+
+// ── DRAWER ────────────────────────────────────────────────────
+function openUserDrawer(userId,email,name){
+  document.getElementById('drawerTitle').textContent=name+' — Logs';
+  document.getElementById('drawerEmail').textContent=email;
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('drawer').classList.add('open');
+  const user=allUsers.find(u=>u._id===userId);
+  const hasSvc=user?.service&&user.service!=='none'&&user.service!=='';
+  document.getElementById('drawerInfo').innerHTML=`
+<div class="di-card"><div class="di-lbl">Email</div><div class="di-val" style="color:var(--cyan)">${user?.email||'—'}</div></div>
+<div class="di-card"><div class="di-lbl">Organization</div><div class="di-val">${user?.organization||'No org set'}</div></div>
+<div class="di-card"><div class="di-lbl">Service</div><div class="di-val">${hasSvc?`<span class="badge badge-green">${user.service.toUpperCase()}</span>`:'<span class="badge badge-dim">NONE</span>'}</div></div>
+<div class="di-card"><div class="di-lbl">Verified</div><div class="di-val">${user?.isVerified?'<span class="badge badge-green">✓ YES</span>':'<span class="badge badge-red">✗ NO</span>'}</div></div>`;
+  const userLogs=allLogs.filter(l=>l.userId===userId||l.userId?.toString()===userId);
+  const wrap=document.getElementById('drawerLogWrap');
+  if(!userLogs.length){wrap.innerHTML='<div style="text-align:center;padding:40px;font-family:DM Mono,monospace;font-size:10px;color:var(--dim)">No logs for this user</div>';return;}
+  wrap.innerHTML=`<table style="width:100%;border-collapse:collapse">
+<thead><tr>
+<th style="padding:8px 10px;text-align:left;font-family:DM Mono,monospace;font-size:8px;letter-spacing:2px;color:var(--dim);border-bottom:1px solid var(--border)">TIME</th>
+<th style="padding:8px 10px;text-align:left;font-family:DM Mono,monospace;font-size:8px;letter-spacing:2px;color:var(--dim);border-bottom:1px solid var(--border)">TYPE</th>
+<th style="padding:8px 10px;text-align:left;font-family:DM Mono,monospace;font-size:8px;letter-spacing:2px;color:var(--dim);border-bottom:1px solid var(--border)">IP</th>
+<th style="padding:8px 10px;text-align:left;font-family:DM Mono,monospace;font-size:8px;letter-spacing:2px;color:var(--dim);border-bottom:1px solid var(--border)">MESSAGE</th>
+</tr></thead>
+<tbody>${userLogs.slice(0,50).map(l=>{
+  const d=new Date(l.createdAt);
+  return `<tr style="border-bottom:1px solid rgba(255,255,255,0.035)">
+<td style="padding:9px 10px;font-family:DM Mono,monospace;font-size:9px;color:var(--dim)">${d.toLocaleTimeString('en-IN',{hour12:false})}<br>${d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</td>
+<td style="padding:9px 10px">${typeBadge(l.type)}</td>
+<td style="padding:9px 10px"><span class="ip-tag">${l.ip||'—'}</span></td>
+<td style="padding:9px 10px;font-size:11px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${l.message||''}">${(l.message||'—').substring(0,40)}</td>
+</tr>`;
+}).join('')}</tbody></table>`;
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ── CHARTS ────────────────────────────────────────────────────
+let charts={};
+const CHART_COLORS=['#ff2a4a','#ff7128','#fbbf24','#8b23e8','#3b82f6','#ec4899','#14b8a6','#f59e0b','#6366f1','#10b981'];
+const CAT_KEYS=[
+  {k:'BRUTE_FORCE',l:'Brute Force'},{k:'SQL_INJECTION',l:'SQL Injection'},
+  {k:'XSS_ATTACK',l:'XSS'},{k:'DDOS_ATTACK',l:'DDoS'},
+  {k:'CSRF_TEST',l:'CSRF'},{k:'KEYLOGGER',l:'Keylogger'},
+  {k:'FILE_UPLOAD',l:'File Upload'},{k:'PATH_TRAVERSAL',l:'Path Traversal'},
+  {k:'RATE_LIMIT',l:'Rate Limit'},{k:'HONEYPOT',l:'Honeypot'},
+];
+function buildCharts(){
+  const catCounts={};CAT_KEYS.forEach(c=>catCounts[c.k]=0);
+  allLogs.forEach(l=>{const t=(l.type||'').toUpperCase();CAT_KEYS.forEach(c=>{if(t.includes(c.k))catCounts[c.k]++;});});
+
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const atkD=new Array(7).fill(0),authD=new Array(7).fill(0);
+  allLogs.forEach(l=>{const d=new Date(l.createdAt).getDay(),idx=d===0?6:d-1;if(isAttack(l))atkD[idx]++;else authD[idx]++;});
+  document.getElementById('chartMeta').textContent=`${allLogs.length} total events`;
+
+  Object.values(charts).forEach(c=>c.destroy?.());charts={};
+
+  const gridColor='rgba(255,255,255,0.04)';
+  const tickColor='rgba(240,234,250,0.25)';
+  const baseChartOpts={responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'rgba(240,234,250,0.5)',font:{size:10,family:'DM Mono'}}}},
+    scales:{y:{beginAtZero:true,grid:{color:gridColor},ticks:{color:tickColor,font:{family:'DM Mono',size:9}}},
+            x:{grid:{display:false},ticks:{color:tickColor,font:{family:'DM Mono',size:9}}}}};
+
+  charts.trend=new Chart(document.getElementById('trendChart'),{
+    type:'line',
+    data:{labels:days,datasets:[
+      {label:'Attacks',data:atkD,borderColor:'#ff2a4a',backgroundColor:'rgba(255,42,74,0.07)',borderWidth:2,tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#ff2a4a'},
+      {label:'Auth',  data:authD,borderColor:'#00f596',backgroundColor:'rgba(0,245,150,0.07)',borderWidth:2,tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#00f596'},
+    ]},options:{...baseChartOpts}
+  });
+
+  const distEntries=CAT_KEYS.map((c,i)=>({label:c.l,val:catCounts[c.k],color:CHART_COLORS[i]})).filter(e=>e.val>0);
+  if(!distEntries.length)distEntries.push({label:'No Data',val:1,color:'#1e1530'});
+  charts.dist=new Chart(document.getElementById('distChart'),{
+    type:'doughnut',
+    data:{labels:distEntries.map(e=>e.label),datasets:[{data:distEntries.map(e=>e.val),backgroundColor:distEntries.map(e=>e.color),borderColor:'rgba(255,255,255,0.05)',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{legend:{labels:{color:'rgba(240,234,250,0.5)',font:{size:9,family:'DM Mono'},padding:8}}}}
+  });
+
+  const sortedCats=CAT_KEYS.map((c,i)=>({label:c.l,val:catCounts[c.k],color:CHART_COLORS[i]})).sort((a,b)=>b.val-a.val);
+  charts.typeBar=new Chart(document.getElementById('typeBarChart'),{
+    type:'bar',
+    data:{labels:sortedCats.map(c=>c.label),datasets:[{label:'Events',data:sortedCats.map(c=>c.val),backgroundColor:sortedCats.map(c=>c.color+'bb'),borderColor:sortedCats.map(c=>c.color),borderWidth:1,borderRadius:2}]},
+    options:{...baseChartOpts,plugins:{legend:{display:false}}}
+  });
+
+  const userCounts={};allLogs.filter(isAttack).forEach(l=>{if(l.userId)userCounts[l.userId]=(userCounts[l.userId]||0)+1;});
+  const userMap={};allUsers.forEach(u=>{userMap[u._id]=u.email?.split('@')[0]||'unknown';});
+  const topUsers=Object.entries(userCounts).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([id,cnt])=>({label:userMap[id]||'Unknown',val:cnt}));
+  charts.userBar=new Chart(document.getElementById('userBarChart'),{
+    type:'bar',
+    data:{labels:topUsers.map(u=>u.label),datasets:[{label:'Attacks',data:topUsers.map(u=>u.val),backgroundColor:'rgba(139,35,232,0.55)',borderColor:'#8b23e8',borderWidth:1,borderRadius:2}]},
+    options:{...baseChartOpts,indexAxis:'y',plugins:{legend:{display:false}}}
+  });
+
+  const today=new Date(),vol=new Array(14).fill(0),volLabels=[];
+  for(let i=13;i>=0;i--){const d=new Date(today);d.setDate(today.getDate()-i);volLabels.push(d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));}
+  allLogs.forEach(l=>{const d=new Date(l.createdAt);const diff=Math.floor((today-d)/(1000*60*60*24));if(diff>=0&&diff<14)vol[13-diff]++;});
+  charts.volume=new Chart(document.getElementById('volumeChart'),{
+    type:'bar',
+    data:{labels:volLabels,datasets:[{label:'Log Events',data:vol,backgroundColor:'rgba(0,229,255,0.12)',borderColor:'#00e5ff',borderWidth:1,borderRadius:2}]},
+    options:{...baseChartOpts,plugins:{legend:{display:false}}}
+  });
+}
+
+loadAll();
+</script>
+<script src="public/js/admin.js"></script>
+
+<!-- SERVICE EDITOR MODAL -->
+<div class="svc-modal-backdrop" id="svcModalBackdrop">
+  <div class="svc-modal">
+    <div class="svc-modal-head">
+      <div>
+        <div class="svc-modal-title">EDIT SERVICE</div>
+        <div class="svc-modal-sub" id="svcModalEmail">—</div>
+      </div>
+      <button class="drawer-close" onclick="closeSvcModal()">✕</button>
+    </div>
+    <div class="svc-modal-body">
+      <div class="svc-options" id="svcOptions">
+        <div class="svc-opt" data-val="none" onclick="selectSvc(this)"><div class="svc-opt-name">NONE</div><div class="svc-opt-desc">No service</div></div>
+        <div class="svc-opt" data-val="ssh" onclick="selectSvc(this)"><div class="svc-opt-name">SSH</div><div class="svc-opt-desc">Secure Shell</div></div>
+        <div class="svc-opt" data-val="http" onclick="selectSvc(this)"><div class="svc-opt-name">HTTP</div><div class="svc-opt-desc">Web server</div></div>
+        <div class="svc-opt" data-val="ftp" onclick="selectSvc(this)"><div class="svc-opt-name">FTP</div><div class="svc-opt-desc">File transfer</div></div>
+        <div class="svc-opt" data-val="smtp" onclick="selectSvc(this)"><div class="svc-opt-name">SMTP</div><div class="svc-opt-desc">Email server</div></div>
+        <div class="svc-opt" data-val="rdp" onclick="selectSvc(this)"><div class="svc-opt-name">RDP</div><div class="svc-opt-desc">Remote desktop</div></div>
+        <div class="svc-opt" data-val="mysql" onclick="selectSvc(this)"><div class="svc-opt-name">MYSQL</div><div class="svc-opt-desc">Database</div></div>
+        <div class="svc-opt" data-val="telnet" onclick="selectSvc(this)"><div class="svc-opt-name">TELNET</div><div class="svc-opt-desc">Legacy shell</div></div>
+      </div>
+      <button class="btn-svc-save" onclick="saveSvc()">SAVE SERVICE</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="confirm-modal-backdrop" id="confirmModalBackdrop">
+  <div class="confirm-modal">
+    <div class="confirm-modal-body">
+      <div class="confirm-icon">⚠</div>
+      <div class="confirm-title">DELETE USER?</div>
+      <div class="confirm-sub" id="confirmModalSub">This will permanently delete the user and all their logs.</div>
+      <div class="confirm-btns">
+        <button class="btn-confirm-yes" id="confirmYesBtn">DELETE</button>
+        <button class="btn-confirm-no" onclick="closeConfirmModal()">CANCEL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity Logs | HoneyShield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="public/css/cyber-dashboard.css">
+  <style>
+    /* ── PAGE HEADER ─────────────────────────────────────── */
+    .logs-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .logs-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .logs-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .logs-count-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--cyan);
+      background: rgba(0,245,255,0.07);
+      border: 1px solid rgba(0,245,255,0.18);
+      border-radius: 20px;
+      padding: 6px 14px;
+      letter-spacing: 1px;
+    }
+
+    /* ── FILTERS PANEL ───────────────────────────────────── */
+    .filters-panel {
+      background: rgba(8,2,20,0.6);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr 1fr auto;
+      gap: 12px;
+      align-items: flex-end;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .filters-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,245,255,0.2), rgba(124,58,237,0.2), transparent);
+    }
+    .fg { display: flex; flex-direction: column; gap: 6px; }
+    .fg label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: rgba(226,232,240,0.3);
+      text-transform: uppercase;
+    }
+    .fg input,
+    .fg select {
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      appearance: none;
+    }
+    .fg input::placeholder { color: rgba(226,232,240,0.2); }
+    .fg input:focus,
+    .fg select:focus {
+      border-color: rgba(0,245,255,0.35);
+      box-shadow: 0 0 0 3px rgba(0,245,255,0.05);
+    }
+    .fg select option { background: #0d0b16; }
+    .filter-btns { display: flex; gap: 8px; align-self: flex-end; }
+    .btn-apply {
+      padding: 10px 18px;
+      background: linear-gradient(135deg, var(--violet), #5b21b6);
+      border: none; border-radius: 8px;
+      color: white;
+      font-family: 'Syne', sans-serif;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .btn-apply:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
+    .btn-clear {
+      padding: 10px 14px;
+      background: rgba(255,59,107,0.07);
+      border: 1px solid rgba(255,59,107,0.2);
+      border-radius: 8px;
+      color: rgba(255,59,107,0.7);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 1px;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .btn-clear:hover { border-color: rgba(255,59,107,0.4); color: var(--red); }
+
+    /* ── QUICK FILTER TABS ───────────────────────────────── */
+    .quick-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .qf-tab {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .qf-tab:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
+    .qf-tab.active {
+      background: rgba(0,245,255,0.07);
+      border-color: rgba(0,245,255,0.3);
+      color: var(--cyan);
+    }
+    .qf-tab.danger.active {
+      background: rgba(255,59,107,0.07);
+      border-color: rgba(255,59,107,0.3);
+      color: var(--red);
+    }
+    .qf-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+
+    /* ── LOGS TABLE PANEL ────────────────────────────────── */
+    .logs-panel {
+      background: rgba(8,2,20,0.6);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .logs-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,245,255,0.2), rgba(124,58,237,0.2), transparent);
+    }
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .log-table thead {
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
+    }
+    .log-table th {
+      padding: 14px 16px;
+      text-align: left;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2.5px;
+      color: rgba(226,232,240,0.3);
+      text-transform: uppercase;
+      cursor: pointer;
+      user-select: none;
+      transition: color .2s;
+      white-space: nowrap;
+    }
+    .log-table th:hover { color: var(--cyan); }
+    .log-table th.sort-asc::after { content: " ↑"; color: var(--green); }
+    .log-table th.sort-desc::after { content: " ↓"; color: var(--red); }
+    .log-table th.sortable::after { content: " ↕"; opacity: .3; }
+
+    .log-table td {
+      padding: 13px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 13px;
+      color: rgba(226,232,240,0.65);
+      vertical-align: middle;
+    }
+    .log-table tbody tr {
+      transition: background .15s;
+      animation: rowIn .3s ease both;
+    }
+    @keyframes rowIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+    .log-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+    .log-table tbody tr:last-child td { border-bottom: none; }
+
+    /* ── TIME COL ────────────────────────────────────────── */
+    .log-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: rgba(226,232,240,0.35);
+      white-space: nowrap;
+    }
+    .log-time-date { display: block; color: rgba(226,232,240,0.2); font-size: 10px; margin-top: 2px; }
+
+    /* ── TYPE BADGES ─────────────────────────────────────── */
+    .type-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border: 1px solid;
+    }
+    .type-AUTH         { background:rgba(0,245,196,0.1);  color:var(--green); border-color:rgba(0,245,196,0.25); }
+    .type-LOGIN_SUCCESS{ background:rgba(0,245,196,0.1);  color:var(--green); border-color:rgba(0,245,196,0.25); }
+    .type-LOGIN_FAIL   { background:rgba(255,59,107,0.1); color:var(--red);   border-color:rgba(255,59,107,0.25); }
+    .type-HONEYPOT     { background:rgba(245,158,11,0.1); color:#fbbf24;      border-color:rgba(245,158,11,0.25); }
+    .type-BOT_DETECTED { background:rgba(245,158,11,0.1); color:#fbbf24;      border-color:rgba(245,158,11,0.25); }
+    .type-SQL_INJECTION{ background:rgba(249,115,22,0.1); color:#fb923c;      border-color:rgba(249,115,22,0.25); }
+    .type-XSS_ATTACK   { background:rgba(234,179,8,0.1);  color:#fde047;      border-color:rgba(234,179,8,0.25); }
+    .type-CSRF_TEST    { background:rgba(59,130,246,0.1); color:#60a5fa;      border-color:rgba(59,130,246,0.25); }
+    .type-BRUTE_FORCE  { background:rgba(255,59,107,0.1); color:var(--red);   border-color:rgba(255,59,107,0.25); }
+    .type-RATE_LIMIT   { background:rgba(139,92,246,0.1); color:#a78bfa;      border-color:rgba(139,92,246,0.25); }
+    .type-PATH_TRAVERSAL{ background:rgba(236,72,153,0.1);color:#f472b6;      border-color:rgba(236,72,153,0.25); }
+    .type-INVALID_FILE_TYPE{ background:rgba(20,184,166,0.1);color:#2dd4bf;   border-color:rgba(20,184,166,0.25); }
+    .type-OVERSIZED_FILE{ background:rgba(20,184,166,0.1);color:#2dd4bf;      border-color:rgba(20,184,166,0.25); }
+    .type-DDOS_ATTACK  { background:rgba(124,58,237,0.1); color:#c4b5fd;      border-color:rgba(124,58,237,0.25); }
+    .type-KEYLOGGER_DETECTED{ background:rgba(6,182,212,0.1);color:#22d3ee;   border-color:rgba(6,182,212,0.25); }
+    .type-ERROR        { background:rgba(255,59,107,0.1); color:var(--red);   border-color:rgba(255,59,107,0.25); }
+    .type-UNKNOWN      { background:rgba(255,255,255,0.05);color:var(--muted);border-color:var(--border); }
+
+    /* ── IP ──────────────────────────────────────────────── */
+    .log-ip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #fbbf24;
+      background: rgba(251,191,36,0.07);
+      padding: 3px 8px;
+      border-radius: 5px;
+      border: 1px solid rgba(251,191,36,0.12);
+    }
+
+    /* ── MESSAGE ─────────────────────────────────────────── */
+    .log-msg {
+      max-width: 360px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      color: rgba(226,232,240,0.45);
+    }
+
+    /* ── EMPTY / LOADING ─────────────────────────────────── */
+    .log-empty {
+      text-align: center;
+      padding: 60px 20px !important;
+      color: rgba(226,232,240,0.2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+    .log-empty-icon { font-size: 32px; display: block; margin-bottom: 12px; opacity: .3; }
+
+    .spinner {
+      width: 22px; height: 22px;
+      border: 2px solid rgba(0,245,255,0.15);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-td {
+      text-align: center;
+      padding: 60px 20px !important;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      color: rgba(226,232,240,0.25);
+    }
+
+    /* ── PAGINATION ──────────────────────────────────────── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .page-info {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: rgba(226,232,240,0.25);
+    }
+    .page-btns { display: flex; gap: 6px; }
+    .page-btn {
+      padding: 6px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .page-btn:hover:not(:disabled) { border-color: rgba(0,245,255,0.3); color: var(--cyan); }
+    .page-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .page-btn.active {
+      background: rgba(0,245,255,0.08);
+      border-color: rgba(0,245,255,0.3);
+      color: var(--cyan);
+    }
+
+    @media (max-width: 900px) {
+      .filters-panel { grid-template-columns: 1fr 1fr; }
+      .filter-btns   { grid-column: 1/-1; }
+    }
+    @media (max-width: 600px) {
+      .filters-panel { grid-template-columns: 1fr; }
+      .log-msg { max-width: 180px; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+<div class="mesh-bg"></div>
+<div class="grid-overlay"></div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <svg class="sb-shield" viewBox="0 0 40 40" fill="none">
+        <path d="M20 3L5 9V20C5 27.5 11.5 34.5 20 37C28.5 34.5 35 27.5 35 20V9L20 3Z"
+              stroke="url(#sbGrad)" stroke-width="1.5" fill="rgba(0,245,255,0.05)"/>
+        <path d="M13 20L17.5 24.5L27 15" stroke="url(#sbGrad)" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <defs>
+          <linearGradient id="sbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00f5ff"/>
+            <stop offset="100%" stop-color="#7c3aed"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="sb-brand">
+        <span class="sb-title">HoneyShield</span>
+        <span class="sb-sub">SECURITY OPS</span>
+      </div>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">// NAVIGATION</div>
+    <ul class="sb-nav">
+      <li onclick="navigateTo('user-dashboard.html')">
+        <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span>Dashboard</span>
+      </li>
+      <li onclick="navigateTo('services.html')">
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Services</span>
+      </li>
+      <li class="active" onclick="navigateTo('activity-logs.html')">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h10M3 15h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Activity Logs</span>
+        <div class="nav-indicator"></div>
+      </li>
+      <li onclick="navigateTo('settings.html')">
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 1.5A8.5 8.5 0 1 0 10 18.5 8.5 8.5 0 0 0 10 1.5z" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/></svg>
+        <span>Settings</span>
+      </li>
+    </ul>
+    <div class="sb-divider" style="margin-top:auto"></div>
+    <div class="sb-section-label">// SYSTEM</div>
+    <div class="sb-status-block">
+      <div class="sb-status-row"><span class="sb-status-dot green"></span><span>Honeypot LIVE</span></div>
+      <div class="sb-status-row"><span class="sb-status-dot cyan"></span><span>TLS Active</span></div>
+      <div class="sb-status-row"><span class="sb-status-dot violet"></span><span>Monitor ON</span></div>
+    </div>
+    <button class="sb-logout" onclick="logout()">
+      <svg viewBox="0 0 20 20" fill="none"><path d="M13 3h4v14h-4M8 14l4-4-4-4M12 10H3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Disconnect</span>
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="mainContent">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">
+          <span class="topbar-label">// ACTIVITY LOGS</span>
+          <div class="topbar-live">
+            <span class="live-dot"></span>
+            EVENT MONITOR
+          </div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-clock" id="topClock">--:--:--</div>
+        <div class="topbar-user">
+          <div class="user-avatar" id="userAvatar">OP</div>
+          <div class="user-info">
+            <span class="user-name" id="userName">Operator</span>
+            <span class="user-role">SECURITY OPS</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGE HEADER -->
+    <div class="logs-header">
+      <div>
+        <div class="logs-title">Security Event Logs</div>
+        <div class="logs-sub">// All detected threats and authentication events</div>
+      </div>
+      <div class="logs-count-pill" id="logCountPill">— EVENTS</div>
+    </div>
+
+    <!-- QUICK FILTER TABS -->
+    <div class="quick-filters">
+      <button class="qf-tab active" onclick="quickFilter('all', this)">
+        <span class="qf-dot" style="background:var(--cyan)"></span> ALL
+      </button>
+      <button class="qf-tab" onclick="quickFilter('auth', this)">
+        <span class="qf-dot" style="background:var(--green)"></span> AUTH
+      </button>
+      <button class="qf-tab danger" onclick="quickFilter('attacks', this)">
+        <span class="qf-dot" style="background:var(--red)"></span> ATTACKS
+      </button>
+      <button class="qf-tab" onclick="quickFilter('SQL_INJECTION', this)">💉 SQL</button>
+      <button class="qf-tab" onclick="quickFilter('XSS_ATTACK', this)">🎯 XSS</button>
+      <button class="qf-tab" onclick="quickFilter('BRUTE_FORCE', this)">🔪 BRUTE</button>
+      <button class="qf-tab" onclick="quickFilter('DDOS_ATTACK', this)">🌊 DDOS</button>
+      <button class="qf-tab" onclick="quickFilter('HONEYPOT', this)">🍯 HONEYPOT</button>
+    </div>
+
+    <!-- FILTERS PANEL -->
+    <div class="filters-panel">
+      <div class="fg">
+        <label>Log Type</label>
+        <select id="typeFilter">
+          <option value="">All Types</option>
+          <optgroup label="── Auth ──">
+            <option value="AUTH">AUTH</option>
+            <option value="LOGIN_SUCCESS">LOGIN SUCCESS</option>
+            <option value="LOGIN_FAIL">LOGIN FAIL</option>
+          </optgroup>
+          <optgroup label="── Attacks ──">
+            <option value="HONEYPOT">HONEYPOT</option>
+            <option value="BOT_DETECTED">BOT DETECTED</option>
+            <option value="SQL_INJECTION">SQL INJECTION</option>
+            <option value="XSS_ATTACK">XSS ATTACK</option>
+            <option value="CSRF_TEST">CSRF TEST</option>
+            <option value="BRUTE_FORCE">BRUTE FORCE</option>
+            <option value="RATE_LIMIT">RATE LIMIT</option>
+            <option value="PATH_TRAVERSAL">PATH TRAVERSAL</option>
+            <option value="INVALID_FILE_TYPE">INVALID FILE TYPE</option>
+            <option value="OVERSIZED_FILE">OVERSIZED FILE</option>
+            <option value="DDOS_ATTACK">DDOS ATTACK</option>
+            <option value="KEYLOGGER_DETECTED">KEYLOGGER</option>
+          </optgroup>
+          <optgroup label="── Other ──">
+            <option value="ERROR">ERROR</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Search IP / Message</label>
+        <input type="text" id="searchInput" placeholder="e.g. 192.168.1.45">
+      </div>
+      <div class="fg">
+        <label>From Date</label>
+        <input type="date" id="dateFrom">
+      </div>
+      <div class="fg">
+        <label>To Date</label>
+        <input type="date" id="dateTo">
+      </div>
+      <div class="filter-btns">
+        <button class="btn-clear" onclick="clearFilters()">CLEAR</button>
+        <button class="btn-apply" onclick="applyFilters()">APPLY</button>
+      </div>
+    </div>
+
+    <!-- LOGS TABLE -->
+    <div class="logs-panel">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th class="sortable" onclick="sortBy('time')">TIME</th>
+            <th class="sortable" onclick="sortBy('type')">TYPE</th>
+            <th class="sortable" onclick="sortBy('ip')">SOURCE IP</th>
+            <th>MESSAGE</th>
+          </tr>
+        </thead>
+        <tbody id="logBody">
+          <tr>
+            <td colspan="4" class="loading-td">
+              <div class="spinner"></div>
+              <div style="margin-top:12px">LOADING EVENTS...</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="pagination">
+      <div class="page-info" id="pageInfo">Showing 0 of 0 events</div>
+      <div class="page-btns" id="pageBtns"></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── CLOCK ──────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('topClock').textContent =
+    new Date().toTimeString().split(' ')[0] + ' UTC';
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ── MATRIX BG ─────────────────────────────────────────────
+const canvas = document.getElementById('matrix-canvas');
+const ctx    = canvas.getContext('2d');
+function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+resize(); window.addEventListener('resize', resize);
+const chars = '01アイウエオカキクケコ!@#$%^&*';
+let cols = [];
+function initCols() {
+  cols = [];
+  for (let i = 0; i < Math.floor(canvas.width / 16); i++)
+    cols[i] = Math.random() * -canvas.height;
+}
+initCols(); window.addEventListener('resize', initCols);
+setInterval(() => {
+  ctx.fillStyle = 'rgba(3,1,10,.06)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '12px JetBrains Mono, monospace';
+  cols.forEach((y, i) => {
+    const a = 0.3 + Math.random() * 0.5;
+    ctx.fillStyle = Math.random() > 0.95
+      ? `rgba(0,245,255,${a})`
+      : `rgba(124,58,237,${a * 0.4})`;
+    ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 16, y);
+    if (y > canvas.height && Math.random() > 0.975) cols[i] = 0;
+    cols[i] += 14;
+  });
+}, 55);
+
+// ── NAV ────────────────────────────────────────────────────
+function navigateTo(page) {
+  document.getElementById('mainContent').style.opacity = '0';
+  setTimeout(() => { window.location.href = page; }, 200);
+}
+function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+
+// ── STATE ──────────────────────────────────────────────────
+let allLogs      = [];
+let filteredLogs = [];
+let currentSort  = { field: null, dir: 'desc' };
+let currentPage  = 1;
+const PAGE_SIZE  = 25;
+
+// ── ATTACK TYPE GROUPS ─────────────────────────────────────
+const AUTH_TYPES   = ['AUTH','LOGIN','LOGIN_SUCCESS','LOGIN_FAIL'];
+const ATTACK_TYPES = [
+  'HONEYPOT','BOT_DETECTED','SQL_INJECTION','XSS_ATTACK','CSRF_TEST',
+  'BRUTE_FORCE','RATE_LIMIT','PATH_TRAVERSAL','INVALID_FILE_TYPE',
+  'OVERSIZED_FILE','DDOS_ATTACK','KEYLOGGER_DETECTED','KEYLOGGER'
+];
+
+function classifyLog(type) {
+  if (!type) return 'unknown';
+  const t = type.toUpperCase();
+  if (AUTH_TYPES.some(a => t.includes(a)))   return 'auth';
+  if (ATTACK_TYPES.some(a => t.includes(a))) return 'attack';
+  return 'other';
+}
+
+// ── BADGE CLASS ────────────────────────────────────────────
+function badgeClass(type) {
+  if (!type) return 'type-UNKNOWN';
+  const t = type.toUpperCase().replace(/\s+/g, '_');
+  const known = [
+    'AUTH','LOGIN_SUCCESS','LOGIN_FAIL','HONEYPOT','BOT_DETECTED',
+    'SQL_INJECTION','XSS_ATTACK','CSRF_TEST','BRUTE_FORCE','RATE_LIMIT',
+    'PATH_TRAVERSAL','INVALID_FILE_TYPE','OVERSIZED_FILE','DDOS_ATTACK',
+    'KEYLOGGER_DETECTED','ERROR'
+  ];
+  return known.includes(t) ? `type-${t}` : 'type-UNKNOWN';
+}
+
+// ── RENDER ─────────────────────────────────────────────────
+function renderLogs(logs) {
+  const body = document.getElementById('logBody');
+  body.innerHTML = '';
+
+  if (!logs || logs.length === 0) {
+    body.innerHTML = `<tr><td colspan="4" class="log-empty">
+      <span class="log-empty-icon">📭</span>
+      NO EVENTS FOUND
+    </td></tr>`;
+    return;
+  }
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page  = logs.slice(start, start + PAGE_SIZE);
+
+  page.forEach((log, i) => {
+    const d    = new Date(log.createdAt);
+    const time = d.toLocaleTimeString('en-IN', { hour12: false });
+    const date = d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+    const type = (log.type || 'UNKNOWN').toUpperCase();
+    const ip   = log.ip || '—';
+    const msg  = log.message || '—';
+
+    const tr = document.createElement('tr');
+    tr.style.animationDelay = `${i * 0.02}s`;
+    tr.innerHTML = `
+      <td>
+        <span class="log-time">${time}</span>
+        <span class="log-time-date">${date}</span>
+      </td>
+      <td><span class="type-badge ${badgeClass(type)}">${type}</span></td>
+      <td><span class="log-ip">${ip}</span></td>
+      <td><div class="log-msg" title="${msg}">${msg}</div></td>`;
+    body.appendChild(tr);
+  });
+
+  renderPagination(logs.length);
+  document.getElementById('logCountPill').textContent =
+    `${logs.length} EVENT${logs.length !== 1 ? 'S' : ''}`;
+}
+
+// ── PAGINATION ─────────────────────────────────────────────
+function renderPagination(total) {
+  const pages = Math.ceil(total / PAGE_SIZE);
+  const info  = document.getElementById('pageInfo');
+  const btns  = document.getElementById('pageBtns');
+
+  const start = Math.min((currentPage - 1) * PAGE_SIZE + 1, total);
+  const end   = Math.min(currentPage * PAGE_SIZE, total);
+  info.textContent = `Showing ${start}–${end} of ${total} events`;
+
+  btns.innerHTML = '';
+  const prev = document.createElement('button');
+  prev.className = 'page-btn';
+  prev.textContent = '← PREV';
+  prev.disabled = currentPage === 1;
+  prev.onclick = () => { currentPage--; renderLogs(filteredLogs); };
+  btns.appendChild(prev);
+
+  // page numbers
+  for (let p = Math.max(1, currentPage - 2); p <= Math.min(pages, currentPage + 2); p++) {
+    const btn = document.createElement('button');
+    btn.className = `page-btn${p === currentPage ? ' active' : ''}`;
+    btn.textContent = p;
+    btn.onclick = ((pg) => () => { currentPage = pg; renderLogs(filteredLogs); })(p);
+    btns.appendChild(btn);
+  }
+
+  const next = document.createElement('button');
+  next.className = 'page-btn';
+  next.textContent = 'NEXT →';
+  next.disabled = currentPage >= pages;
+  next.onclick = () => { currentPage++; renderLogs(filteredLogs); };
+  btns.appendChild(next);
+}
+
+// ── SORT ───────────────────────────────────────────────────
+function sortBy(field) {
+  document.querySelectorAll('.log-table th').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (!th.classList.contains('sortable')) return;
+    th.classList.add('sortable');
+  });
+
+  if (currentSort.field === field) {
+    currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    currentSort.field = field;
+    currentSort.dir = 'asc';
+  }
+
+  filteredLogs.sort((a, b) => {
+    let av = field === 'time' ? new Date(a.createdAt) : (a[field] || '').toLowerCase();
+    let bv = field === 'time' ? new Date(b.createdAt) : (b[field] || '').toLowerCase();
+    return currentSort.dir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+  });
+
+  const th = document.querySelector(`th[onclick="sortBy('${field}')"]`);
+  if (th) th.classList.add(currentSort.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+
+  currentPage = 1;
+  renderLogs(filteredLogs);
+}
+
+// ── QUICK FILTERS ──────────────────────────────────────────
+function quickFilter(type, btn) {
+  document.querySelectorAll('.qf-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+
+  if (type === 'all') {
+    filteredLogs = [...allLogs];
+  } else if (type === 'auth') {
+    filteredLogs = allLogs.filter(l => classifyLog(l.type) === 'auth');
+  } else if (type === 'attacks') {
+    filteredLogs = allLogs.filter(l => classifyLog(l.type) === 'attack');
+  } else {
+    filteredLogs = allLogs.filter(l =>
+      (l.type || '').toUpperCase().includes(type.toUpperCase()));
+  }
+  currentPage = 1;
+  renderLogs(filteredLogs);
+}
+
+// ── APPLY FILTERS ──────────────────────────────────────────
+function applyFilters() {
+  const type     = document.getElementById('typeFilter').value;
+  const search   = document.getElementById('searchInput').value.toLowerCase();
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo   = document.getElementById('dateTo').value;
+
+  filteredLogs = allLogs.filter(log => {
+    if (type && !(log.type || '').toUpperCase().includes(type)) return false;
+    if (search) {
+      const ip  = (log.ip      || '').toLowerCase();
+      const msg = (log.message || '').toLowerCase();
+      if (!ip.includes(search) && !msg.includes(search)) return false;
+    }
+    if (dateFrom && new Date(log.createdAt) < new Date(dateFrom)) return false;
+    if (dateTo) {
+      const to = new Date(dateTo); to.setHours(23,59,59,999);
+      if (new Date(log.createdAt) > to) return false;
+    }
+    return true;
+  });
+
+  currentPage = 1;
+  renderLogs(filteredLogs);
+}
+
+function clearFilters() {
+  document.getElementById('typeFilter').value  = '';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('dateFrom').value    = '';
+  document.getElementById('dateTo').value      = '';
+  document.querySelectorAll('.qf-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.qf-tab').classList.add('active');
+  filteredLogs = [...allLogs];
+  currentPage  = 1;
+  renderLogs(filteredLogs);
+}
+
+// ── FETCH ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const raw = localStorage.getItem('user');
+  if (!raw) { window.location.href = 'login.html'; return; }
+  const user = JSON.parse(raw);
+
+  // Avatar
+  const avatarEl = document.getElementById('userAvatar');
+  const nameEl   = document.getElementById('userName');
+  if (user.name) {
+    avatarEl.textContent = user.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    nameEl.textContent   = user.name;
+  } else if (user.email) {
+    avatarEl.textContent = user.email[0].toUpperCase();
+    nameEl.textContent   = user.email.split('@')[0];
+  }
+
+  const userId = user._id || user.id;
+  fetch(`http://localhost:3000/api/logs?userId=${userId}`)
+    .then(r => r.json())
+    .then(logs => {
+      allLogs = (logs || []).filter(l =>
+        !l.userId || l.userId === userId || l.user === userId || l.email === user.email
+      );
+      // default sort: newest first
+      allLogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      filteredLogs = [...allLogs];
+      renderLogs(filteredLogs);
+    })
+    .catch(() => {
+      document.getElementById('logBody').innerHTML =
+        `<tr><td colspan="4" class="log-empty">
+          <span class="log-empty-icon">⚠️</span>
+          COULD NOT CONNECT TO SERVER
+        </td></tr>`;
+    });
+
+  // Fade in
+  const main = document.getElementById('mainContent');
+  main.style.opacity = '0';
+  main.style.transform = 'translateY(12px)';
+  requestAnimationFrame(() => {
+    main.style.transition = 'opacity .5s ease, transform .5s ease';
+    main.style.opacity    = '1';
+    main.style.transform  = 'translateY(0)';
+  });
+});
+</script>
+
+<script src="public/js/common.js"></script>
+</body>
+</html>
